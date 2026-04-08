@@ -1,21 +1,17 @@
 import { useState, useEffect } from "react";
 import * as XLSX from 'xlsx';
 
-// Função auxiliar para formatar valores monetários
 const formatCurrency = (value) => {
   if (value === null || value === undefined || value === '') {
     return '';
   }
 
-  // Converte para número
   const numValue = typeof value === 'number' ? value : parseFloat(String(value).replace(',', '.'));
 
-  // Verifica se é um número válido
   if (isNaN(numValue)) {
     return String(value);
   }
 
-  // Formata com 2 casas decimais e substitui ponto por vírgula
   return numValue.toFixed(2).replace('.', ',');
 };
 
