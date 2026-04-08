@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3333/api',
+  baseURL: 'https://poster-generator-nosy.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
