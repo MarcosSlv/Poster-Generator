@@ -52,7 +52,7 @@ function StandardSingleForm() {
   };
 
   return (
-    <div className="space-y-4 text-gray-100">
+    <div className="space-y-4 text-card-foreground">
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col items-center">
           <label htmlFor="produto" className="block mb-2 text-center">Produto</label>
@@ -64,7 +64,7 @@ function StandardSingleForm() {
             validation={{ required: 'A descrição é obrigatória' }}
             className="w-full text-center"
           />
-          {errors.produto && <p className="text-red-400 font-bold text-sm text-center">{errors.produto.message}</p>}
+          {errors.produto && <p className="text-center text-sm font-bold text-destructive">{errors.produto.message}</p>}
         </div>
 
         <div className="flex items-start mt-4">
@@ -82,7 +82,7 @@ function StandardSingleForm() {
               }}
               className="w-28 text-center rounded-md p-2"
             />
-            {errors.preco && <p className="text-red-400 font-bold text-sm text-center mt-1">{errors.preco.message}</p>}
+            {errors.preco && <p className="mt-1 text-center text-sm font-bold text-destructive">{errors.preco.message}</p>}
           </div>
 
           <div className="flex flex-col items-center w-1/2">
@@ -90,12 +90,12 @@ function StandardSingleForm() {
             <select
               id="medida"
               {...register("medida", { required: 'A medida é obrigatória' })}
-              className="w-28 bg-blue-300 text-gray-100 rounded-md p-2"
+              className="w-28 rounded-md border border-border bg-input p-2 text-foreground outline-none transition hover:border-secondary focus:border-ring focus:ring-1 focus:ring-ring"
             >
               <option value="UN">UN</option>
               <option value="KG">KG</option>
             </select>
-            {errors.medida && <p className="text-red-400 text-sm text-center mt-1">{errors.medida.message}</p>}
+            {errors.medida && <p className="mt-1 text-center text-sm text-destructive">{errors.medida.message}</p>}
           </div>
 
           <div className="flex flex-col items-center w-1/2">
@@ -107,7 +107,7 @@ function StandardSingleForm() {
               register={register}
               className="w-28 rounded-md p-2"
             />
-            {errors.limite && <p className="text-red-400 text-sm text-center">{errors.limite.message}</p>}
+            {errors.limite && <p className="text-center text-sm text-destructive">{errors.limite.message}</p>}
           </div>
         </div>
 
@@ -115,7 +115,7 @@ function StandardSingleForm() {
 
         {isSubmiting ? (
           <Button type="submit" text={
-            <div className="animate-spin inline-block w-6 h-6 border-2 mx-8 border-gray-100 border-t-transparent rounded-full" role="status">
+            <div className="mx-8 inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" role="status">
             </div>
           } disabled={true} />
         ) : (
@@ -133,7 +133,7 @@ function StandardSingleForm() {
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
             <div>
-              <p className="text-center mt-4 text-green-300">{reqResponse} Clique no botão abaixo para fazer o download</p>
+              <p className="mt-4 text-center text-chart-3">{reqResponse} Clique no botão abaixo para fazer o download</p>
               <a href={downloadUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center mt-4">
                 <Button text={<MdDownload className="mr-1 text-xl" />} />
               </a>

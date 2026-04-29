@@ -9,7 +9,6 @@ import { Theme } from "@radix-ui/themes";
 
 import App from "./App.jsx";
 import Home from "./pages/home/index.jsx";
-import TestPage from "./pages/home/testPage/index.jsx";
 
 const router = createBrowserRouter([
   {
@@ -19,10 +18,6 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <Home />
-      },
-      {
-        path: "/test",
-        element: <TestPage />
       }
     ]
   }

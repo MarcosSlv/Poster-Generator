@@ -4,13 +4,13 @@ import FormButton from "../ui/Button";
 
 function HelpModal({ fileDownloadPath, imagePath, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center text-gray-100">
-      <div className="relative bg-gray-400 w-11/12 max-w-md mx-auto rounded-lg shadow-md shadow-gray-300">
-        <div className="flex justify-between items-center p-4 border-b">
+    <div className="fixed inset-0 z-50 flex items-center justify-center text-card-foreground">
+      <div className="relative mx-auto w-11/12 max-w-md rounded-lg border border-border bg-card shadow-md">
+        <div className="flex items-center justify-between border-b border-border p-4">
           <h5 className="text-lg font-bold">Layout de importação</h5>
           <RiCloseLargeFill
             onClick={onClose}
-            className="m-1 hover:text-blue-200 duration-200"
+            className="m-1 cursor-pointer duration-200 hover:text-secondary"
           />
         </div>
         <div className="p-4">
@@ -23,16 +23,16 @@ function HelpModal({ fileDownloadPath, imagePath, onClose }) {
             <a
               href={fileDownloadPath}
               download={fileDownloadPath.split('/').pop()}
-              className="flex items-center justify-center text-gray-100 px-6 py-3 rounded-lg shadow-lg font-semibold bg-blue-300 hover:bg-blue-200 duration-200"
+              className="flex items-center justify-center rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg duration-200 hover:bg-secondary hover:text-secondary-foreground"
             >
               <MdDownload className="mr-1 text-xl" />
             </a>
           </div>
         </div>
-        <div className="flex justify-center p-4 border-t border-gray-300">
+        <div className="flex justify-center border-t border-border p-4">
           <FormButton
             type="button"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2"
             onClick={onClose}
             text={"Ok, entendi."}
           />

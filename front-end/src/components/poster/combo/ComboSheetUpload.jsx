@@ -67,7 +67,7 @@ function ComboSheetUpload() {
   return (
     <div>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <label className="block text-gray-100 mb-2 text-center">Selecione o Arquivo</label>
+        <label className="mb-2 block text-center text-card-foreground">Selecione o Arquivo</label>
         <div className="flex justify-center mb-4">
           <Input
             type="file"
@@ -79,24 +79,24 @@ function ComboSheetUpload() {
             className="w-64"
           />
         </div>
-        {errors.file && <p className="text-center text-red-400 font-bold text-sm">{errors.file.message}</p>}
-        {error && <p className="text-center text-red-400 font-bold text-sm">{error}</p>}
+        {errors.file && <p className="text-center text-sm font-bold text-destructive">{errors.file.message}</p>}
+        {error && <p className="text-center text-sm font-bold text-destructive">{error}</p>}
 
 
         {isSubmiting ? (
           <Button type="submit" text={
-            <div className="animate-spin inline-block w-6 h-6 border-2 mx-8 border-gray-100 border-t-transparent rounded-full" role="status">
+            <div className="mx-8 inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" role="status">
             </div>
           } disabled={true} />
         ) : (
           <Button type="submit" text="Criar Cartaz" disabled={!!error || dataLoading || isSubmiting || reqResponse} />
         )}
 
-        <div className="flex justify-center my-2 py-2 text-gray-100">
+        <div className="my-2 flex justify-center py-2 text-card-foreground">
           <label className="form-label-custom fs-2">
             Dúvidas quanto ao modelo da planilha? <a
               id="button-click-here"
-              className="btn btn-link p-0 font-extrabold underline hover:text-blue-200 transition hover:duration-200 hover:cursor-pointer"
+              className="btn btn-link p-0 font-extrabold underline transition hover:cursor-pointer hover:text-secondary hover:duration-200"
               onClick={openHelpModal}
             >
               Veja aqui
@@ -134,7 +134,7 @@ function ComboSheetUpload() {
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
             <div>
-              <p className="text-center mt-4 text-green-300">{reqResponse} Clique no botão abaixo para fazer o download</p>
+              <p className="mt-4 text-center text-chart-3">{reqResponse} Clique no botão abaixo para fazer o download</p>
               <a href={downloadUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center mt-4">
                 <Button text={<MdDownload className="mr-1 text-xl" />} />
               </a>

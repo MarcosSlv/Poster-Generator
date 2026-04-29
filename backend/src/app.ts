@@ -4,10 +4,28 @@ import { router } from "./routes/index";
 import cors from "cors";
 import path from "path";
 
+const allowedOrigins = (process.env.CORS_ORIGIN ?? "").split(",").map((origin) => origin.trim()).filter(Boolean);
+
 export const app = express();
 
+
+
 app.use(cors({
-  origin: "*"
+  origin(origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(null, true);
+  },
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false,
+  maxAge: 86400,
 }));
 
 app.use("/pdfs", express.static(path.resolve(__dirname, "../pdfs")));

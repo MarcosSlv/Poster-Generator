@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { SegmentedControl } from "@radix-ui/themes";
 import * as Tabs from '@radix-ui/react-tabs';
 
 import HeaderComponent from "../../components/ui/Header";
@@ -36,16 +35,16 @@ function Home() {
         <div className="container mx-auto my-5">
           <div className="flex justify-center mb-6">
             <Tabs.Root value={processType} onValueChange={setProcessType} className="w-full max-w-md">
-              <Tabs.List className="flex justify-center text-gray-100 gap-2 border-b-2 border-gray-300">
+              <Tabs.List className="flex justify-center gap-2 border-b-2 border-border text-muted-foreground">
                 <Tabs.Trigger
                   value="Individuais"
-                  className="px-6 py-3 font-medium transition hover:text-blue-100 data-[state=active]:text-blue-300 data-[state=active]:border-b-2 data-[state=active]:border-blue-300 data-[state=active]:-mb-[2px]"
+                  className="px-6 py-3 font-medium transition hover:text-secondary data-[state=active]:-mb-[2px] data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary"
                 >
                   Individuais
                 </Tabs.Trigger>
                 <Tabs.Trigger
                   value="Planilhas"
-                  className="px-6 py-3 font-medium transition hover:text-blue-100 data-[state=active]:text-blue-300 data-[state=active]:border-b-2 data-[state=active]:border-blue-300 data-[state=active]:-mb-[2px]"
+                  className="px-6 py-3 font-medium transition hover:text-secondary data-[state=active]:-mb-[2px] data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary"
                 >
                   Planilhas
                 </Tabs.Trigger>
@@ -55,18 +54,18 @@ function Home() {
 
 
 
-          <div className="form-container bg-gray-400 p-6 rounded-lg shadow-md shadow-gray-300 max-w-lg mx-auto">
+          <div className="form-container mx-auto max-w-lg rounded-lg border border-border bg-card p-6 text-card-foreground shadow-md">
             <Tabs.Root value={modelType} onValueChange={setModelType} className="w-full">
-              <Tabs.List className="flex justify-center text-gray-100 gap-2 border-b-2 border-gray-200 mb-6">
+              <Tabs.List className="mb-6 flex justify-center gap-2 border-b-2 border-border text-muted-foreground">
                 <Tabs.Trigger
                   value="Padrão"
-                  className="px-6 py-3 font-medium transition hover:text-blue-100 data-[state=active]:text-blue-300 data-[state=active]:border-b-2 data-[state=active]:border-blue-300 data-[state=active]:-mb-[2px]"
+                  className="px-6 py-3 font-medium transition hover:text-secondary data-[state=active]:-mb-[2px] data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary"
                 >
                   Padrão
                 </Tabs.Trigger>
                 <Tabs.Trigger
                   value="Combo"
-                  className="px-6 py-3 font-medium transition hover:text-blue-100 data-[state=active]:text-blue-300 data-[state=active]:border-b-2 data-[state=active]:border-blue-300 data-[state=active]:-mb-[2px]"
+                  className="px-6 py-3 font-medium transition hover:text-secondary data-[state=active]:-mb-[2px] data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary"
                 >
                   Combo
                 </Tabs.Trigger>
