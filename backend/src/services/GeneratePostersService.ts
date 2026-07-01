@@ -64,7 +64,7 @@ const generateBigPoster = (data: posterContent[]): TDocumentDefinitions => {
           bold: true,
           fontSize: 50,
           alignment: "center",
-          absolutePosition: { x: 208, y: 180 },
+          absolutePosition: { x: 30, y: 190 },
         },
         {
           text: "POR:",
