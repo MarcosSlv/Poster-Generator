@@ -1,4 +1,4 @@
-# Sistema de Cartazes Promocionais e Envio de Cobranças
+# Sistema de Cartazes Promocionais
 
 Esse projeto foi desenvolvido para agilizar o processo de criação de cartazes promocionais e envio de e-mails de cobrança para fornecedores no supermercado onde trabalho. O sistema foi pensado para facilitar a comunicação de promoções e melhorar a gestão de cobrança, reduzindo o tempo e os erros manuais associados a essas tarefas.
 
