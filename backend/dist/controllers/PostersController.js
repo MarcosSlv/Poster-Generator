@@ -16,6 +16,7 @@ exports.generateComboPoster = exports.generateBigPoster = exports.generateSmallP
 const GeneratePostersService_1 = require("../services/GeneratePostersService");
 const createDirectory_1 = require("../utils/createDirectory");
 const path_1 = __importDefault(require("path"));
+const crypto_1 = require("crypto");
 const expectedHeaders = {
     defaultPoster: [
         "produto",
@@ -28,23 +29,44 @@ const expectedHeaders = {
         "comboQtd"
     ]
 };
+const MAX_ROWS = 200;
+const validateSheet = (sheet, headers) => {
+    if (!Array.isArray(sheet) || sheet.length === 0) {
+        return { ok: false, message: "Nenhum item foi enviado para a criação dos cartazes." };
+    }
+    if (sheet.length > MAX_ROWS) {
+        return { ok: false, message: `Limite de ${MAX_ROWS} cartazes por requisição excedido.` };
+    }
+    const rowsAreValid = sheet.every((item) => item !== null &&
+        typeof item === "object" &&
+        !Array.isArray(item) &&
+        headers.every((header) => {
+            const value = item[header];
+            return (typeof value === "string" || typeof value === "number") && String(value).trim() !== "";
+        }));
+    if (!rowsAreValid) {
+        return { ok: false, message: "Verifique se o conteúdo enviado na planilha está correto" };
+    }
+    return { ok: true };
+};
+const buildPdfPath = () => {
+    const pdfDirectory = path_1.default.resolve(__dirname, '../../pdfs');
+    (0, createDirectory_1.createDirectory)(pdfDirectory);
+    const pdfFileName = `Cartaz_${(0, crypto_1.randomUUID)()}.pdf`;
+    return { pdfFileName, pdfFilePath: path_1.default.resolve(pdfDirectory, pdfFileName) };
+};
 const generateSmallPoster = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const sheet = req.body.sheet;
         const tamanho = "cartaz-pequeno";
-        const sheetHeaders = sheet.every(item => expectedHeaders.defaultPoster.every(header => item.hasOwnProperty(header)));
-        console.log(sheet);
-        if (!sheetHeaders) {
+        const validation = validateSheet(sheet, expectedHeaders.defaultPoster);
+        if (!validation.ok) {
             return res.status(400).json({
                 status: "Fail",
-                message: "Verifique se o conteúdo enviado na planilha está correto"
+                message: validation.message
             });
         }
-        const pdfDirectory = path_1.default.resolve(__dirname, '../../pdfs');
-        (0, createDirectory_1.createDirectory)(pdfDirectory);
-        const pdfFileName = `Cartaz_${new Date().
-            getDate()}_${new Date().getMonth() + 1}_${Math.random().toFixed(2)}.pdf`;
-        const pdfFilePath = path_1.default.resolve(pdfDirectory, pdfFileName);
+        const { pdfFileName, pdfFilePath } = buildPdfPath();
         yield (0, GeneratePostersService_1.generatePosterService)(sheet, pdfFilePath, tamanho);
         const downloadUrl = `${req.protocol}://${req.get('host')}/pdfs/${pdfFileName}`;
         return res.status(200).json({
@@ -54,9 +76,10 @@ const generateSmallPoster = (req, res) => __awaiter(void 0, void 0, void 0, func
         });
     }
     catch (e) {
+        console.error("Erro ao gerar cartaz pequeno:", e);
         return res.status(500).json({
             status: "Error",
-            message: "Something went wrong"
+            message: "Não foi possível gerar os cartazes. Tente novamente."
         });
     }
 });
@@ -65,19 +88,14 @@ const generateBigPoster = (req, res) => __awaiter(void 0, void 0, void 0, functi
     try {
         const sheet = req.body.sheet;
         const tamanho = "cartaz-grande";
-        const sheetHeaders = sheet.every(item => expectedHeaders.defaultPoster.every(header => item.hasOwnProperty(header)));
-        console.log(sheet);
-        if (!sheetHeaders) {
+        const validation = validateSheet(sheet, expectedHeaders.defaultPoster);
+        if (!validation.ok) {
             return res.status(400).json({
                 status: "Fail",
-                message: "Verifique se o conteúdo enviado na planilha está correto"
+                message: validation.message
             });
         }
-        const pdfDirectory = path_1.default.resolve(__dirname, '../../pdfs');
-        (0, createDirectory_1.createDirectory)(pdfDirectory);
-        const pdfFileName = `Cartaz_${new Date().
-            getDate()}_${new Date().getMonth() + 1}_${Math.random().toFixed(2)}.pdf`;
-        const pdfFilePath = path_1.default.resolve(pdfDirectory, pdfFileName);
+        const { pdfFileName, pdfFilePath } = buildPdfPath();
         yield (0, GeneratePostersService_1.generatePosterService)(sheet, pdfFilePath, tamanho);
         const downloadUrl = `${req.protocol}://${req.get('host')}/pdfs/${pdfFileName}`;
         return res.status(200).json({
@@ -87,9 +105,10 @@ const generateBigPoster = (req, res) => __awaiter(void 0, void 0, void 0, functi
         });
     }
     catch (e) {
+        console.error("Erro ao gerar cartaz grande:", e);
         return res.status(500).json({
             status: "Error",
-            message: "Something went wrong"
+            message: "Não foi possível gerar os cartazes. Tente novamente."
         });
     }
 });
@@ -98,19 +117,14 @@ const generateComboPoster = (req, res) => __awaiter(void 0, void 0, void 0, func
     try {
         const sheet = req.body.sheet;
         const tamanho = "cartaz-combo";
-        const sheetHeaders = sheet.every(item => expectedHeaders.comboPoster.every(header => item.hasOwnProperty(header)));
-        console.log(sheet);
-        if (!sheetHeaders) {
+        const validation = validateSheet(sheet, expectedHeaders.comboPoster);
+        if (!validation.ok) {
             return res.status(400).json({
                 status: "Fail",
-                message: "Verifique se o conteúdo enviado na planilha está correto"
+                message: validation.message
             });
         }
-        const pdfDirectory = path_1.default.resolve(__dirname, '../../pdfs');
-        (0, createDirectory_1.createDirectory)(pdfDirectory);
-        const pdfFileName = `Cartaz_${new Date().
-            getDate()}_${new Date().getMonth() + 1}_${Math.random().toFixed(2)}.pdf`;
-        const pdfFilePath = path_1.default.resolve(pdfDirectory, pdfFileName);
+        const { pdfFileName, pdfFilePath } = buildPdfPath();
         yield (0, GeneratePostersService_1.generatePosterService)(sheet, pdfFilePath, tamanho);
         const downloadUrl = `${req.protocol}://${req.get('host')}/pdfs/${pdfFileName}`;
         return res.status(200).json({
@@ -120,9 +134,10 @@ const generateComboPoster = (req, res) => __awaiter(void 0, void 0, void 0, func
         });
     }
     catch (e) {
+        console.error("Erro ao gerar cartaz combo:", e);
         return res.status(500).json({
             status: "Error",
-            message: "Something went wrong"
+            message: "Não foi possível gerar os cartazes. Tente novamente."
         });
     }
 });

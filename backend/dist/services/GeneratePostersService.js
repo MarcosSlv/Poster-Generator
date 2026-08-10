@@ -50,8 +50,11 @@ pdfmake_1.default.fonts = {
         bold: "Urbane-Bold.ttf",
     },
 };
+const asText = (value) => value === null || value === undefined ? "" : String(value);
 const generatePosterService = (data, outputFilePath, tamanho) => __awaiter(void 0, void 0, void 0, function* () {
-    const validRows = data.filter((row) => row.produto != "" && ('preco' in row ? row.preco != "" : true) && row.medida != "");
+    const validRows = data.filter((row) => asText(row.produto).trim() !== ""
+        && ('preco' in row ? asText(row.preco).trim() !== "" : true)
+        && asText(row.medida).trim() !== "");
     let documentDefinitions;
     if (tamanho === "cartaz-pequeno") {
         documentDefinitions = generateSmallPoster(validRows);
@@ -79,7 +82,7 @@ const generatePosterService = (data, outputFilePath, tamanho) => __awaiter(void 
 });
 exports.generatePosterService = generatePosterService;
 const formatText = (produto) => {
-    const formatedText = produto.split(" ").map(palavra => palavra.length > 10 ? palavra.substring(0, 5) + "." : palavra).join(" ").toUpperCase();
+    const formatedText = asText(produto).split(" ").map(palavra => palavra.length > 10 ? palavra.substring(0, 5) + "." : palavra).join(" ").toUpperCase();
     return formatedText;
 };
 const generateBigPoster = (data) => {
@@ -91,7 +94,7 @@ const generateBigPoster = (data) => {
                     bold: true,
                     fontSize: 50,
                     alignment: "center",
-                    absolutePosition: { x: 208, y: 180 },
+                    absolutePosition: { x: 35, y: 230 },
                 },
                 {
                     text: "POR:",
@@ -108,7 +111,7 @@ const generateBigPoster = (data) => {
                     absolutePosition: { x: 17, y: 720 },
                 },
                 {
-                    text: row.preco.replace(".", ","),
+                    text: asText(row.preco).replace(".", ","),
                     bold: true,
                     fontSize: 170,
                     alignment: "center",
@@ -153,7 +156,6 @@ const generateSmallPoster = (data) => {
     for (let i = 0; i < data.length; i += 2) {
         const row = data[i];
         const nextRow = data[i + 1] ? data[i + 1] : null;
-        console.log(nextRow);
         if (nextRow) {
             const pageContent = {
                 stack: [
@@ -170,7 +172,7 @@ const generateSmallPoster = (data) => {
                         absolutePosition: { x: 280, y: 335 },
                     },
                     {
-                        text: row.preco.replace(".", ","),
+                        text: asText(row.preco).replace(".", ","),
                         bold: true,
                         fontSize: 76,
                         alignment: "center",
@@ -206,7 +208,7 @@ const generateSmallPoster = (data) => {
                         absolutePosition: { x: 280, y: 745 },
                     },
                     {
-                        text: nextRow.preco.replace(".", ","),
+                        text: asText(nextRow.preco).replace(".", ","),
                         fontSize: 76,
                         alignment: "center",
                         absolutePosition: { x: 280, y: 688 },
@@ -253,7 +255,7 @@ const generateSmallPoster = (data) => {
                         absolutePosition: { x: 280, y: 335 },
                     },
                     {
-                        text: row.preco.replace(".", ","),
+                        text: asText(row.preco).replace(".", ","),
                         bold: true,
                         fontSize: 76,
                         alignment: "center",
@@ -344,7 +346,7 @@ const generateComboPoster = (data) => {
                 ...(row.comboVlr
                     ? [
                         {
-                            text: `NESTA OFERTA A UNIDADE SAI POR R$${row.comboVlr.replace(".", ",")}`,
+                            text: `NESTA OFERTA A UNIDADE SAI POR R$${asText(row.comboVlr).replace(".", ",")}`,
                             bold: true,
                             fontSize: 18,
                             alignment: "center",

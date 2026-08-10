@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { posterService } from "../../../services/posterService";
+import { getRequestErrorMessage } from "../../../services/requestError";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdDownload } from "react-icons/md";
 
@@ -13,26 +14,27 @@ function ComboSingleForm() {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [isSubmiting, setIsSubmiting] = useState(false);
   const [reqResponse, setReqResponse] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const formValues = watch();
 
   useEffect(() => {
-    if (downloadUrl) {
-      setDownloadUrl("");
-      setReqResponse("");
-    }
-  }, [formValues.produto, formValues.preco, formValues.medida, formValues.limite]);
+    setDownloadUrl("");
+    setReqResponse("");
+    setSubmitError("");
+  }, [formValues.produto, formValues.comboVlr, formValues.medida, formValues.comboQtd]);
 
   const onSubmit = async (data) => {
     setDownloadUrl("");
     setReqResponse("");
+    setSubmitError("");
     setIsSubmiting(true);
 
     const formatedData = {
       sheet: [{
         ...data,
         comboQtd: String(data.comboQtd).padStart(2, '0'),
-        comboVlr: Number(data.comboVlr.replace(',', '.')).toFixed(2)
+        comboVlr: Number(String(data.comboVlr).replace(',', '.')).toFixed(2)
       }],
     };
 
@@ -42,11 +44,13 @@ function ComboSingleForm() {
       if (responseData.status === "Success") {
         setDownloadUrl(responseData.download);
         setReqResponse(responseData.message);
+      } else {
+        setSubmitError(responseData.message || "Erro ao criar cartaz. Por favor, tente novamente.");
       }
-      setIsSubmiting(false);
     } catch (error) {
       console.error("Erro ao criar cartaz:", error);
-      setReqResponse("Erro ao criar cartaz. Por favor, tente novamente.");
+      setSubmitError(getRequestErrorMessage(error));
+    } finally {
       setIsSubmiting(false);
     }
   };
@@ -77,11 +81,15 @@ function ComboSingleForm() {
               register={register}
               validation={{
                 required: 'A quantidade é obrigatória',
-                min: { value: 1, message: 'A quantidade deve ser maior que 0' }
+                pattern: {
+                  value: /^\d+$/,
+                  message: 'Informe apenas números'
+                },
+                validate: (value) => Number(value) > 0 || 'A quantidade deve ser maior que 0'
               }}
               className="w-28 text-center rounded-md p-2"
             />
-            {errors.preco && <p className="mt-1 text-center text-sm font-bold text-destructive">{errors.preco.message}</p>}
+            {errors.comboQtd && <p className="mt-1 text-center text-sm font-bold text-destructive">{errors.comboQtd.message}</p>}
           </div>
 
           <div className="flex flex-col items-center w-1/2">
@@ -118,13 +126,17 @@ function ComboSingleForm() {
         </div>
 
         <div className="mt-6">
+          {submitError && (
+            <p role="alert" className="mb-2 text-center text-sm font-bold text-destructive">{submitError}</p>
+          )}
+
           {isSubmiting ? (
             <Button type="submit" text={
               <div className="mx-8 inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" role="status">
               </div>
             } disabled={true} />
           ) : (
-            <Button type="submit" text="Criar Cartaz" disabled={isSubmiting || reqResponse} />
+            <Button type="submit" text="Criar Cartaz" disabled={!!downloadUrl} />
           )}
         </div>
       </form>
@@ -148,6 +160,7 @@ function ComboSingleForm() {
                   onClick={() => {
                     setDownloadUrl("");
                     setReqResponse("");
+                    setSubmitError("");
                     setIsSubmiting(false);
                     reset();
                   }}

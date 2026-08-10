@@ -19,10 +19,15 @@ pdfMake.fonts = {
   },
 };
 
+const asText = (value: unknown): string =>
+  value === null || value === undefined ? "" : String(value);
+
 export const generatePosterService = async (data: posterContent[] | comboPosterContent[], outputFilePath: string, tamanho: string,): Promise<void> => {
 
   const validRows = data.filter(
-    (row) => row.produto != "" && ('preco' in row ? row.preco != "" : true) && row.medida != "");
+    (row) => asText(row.produto).trim() !== ""
+      && ('preco' in row ? asText(row.preco).trim() !== "" : true)
+      && asText(row.medida).trim() !== "");
 
   let documentDefinitions: TDocumentDefinitions;
 
@@ -51,7 +56,7 @@ export const generatePosterService = async (data: posterContent[] | comboPosterC
 };
 
 const formatText = (produto: string) => {
-  const formatedText = produto.split(" ").map(palavra => palavra.length > 10 ? palavra.substring(0, 5) + "." : palavra).join(" ").toUpperCase();
+  const formatedText = asText(produto).split(" ").map(palavra => palavra.length > 10 ? palavra.substring(0, 5) + "." : palavra).join(" ").toUpperCase();
   return formatedText;
 };
 
@@ -64,7 +69,7 @@ const generateBigPoster = (data: posterContent[]): TDocumentDefinitions => {
           bold: true,
           fontSize: 50,
           alignment: "center",
-          absolutePosition: { x: 20, y: 190 },
+          absolutePosition: { x: 35, y: 230 },
         },
         {
           text: "POR:",
@@ -81,7 +86,7 @@ const generateBigPoster = (data: posterContent[]): TDocumentDefinitions => {
           absolutePosition: { x: 17, y: 720 },
         },
         {
-          text: row.preco.replace(".", ","),
+          text: asText(row.preco).replace(".", ","),
           bold: true,
           fontSize: 170,
           alignment: "center",
@@ -133,8 +138,6 @@ const generateSmallPoster = (data: posterContent[]): TDocumentDefinitions => {
     const row = data[i];
     const nextRow = data[i + 1] ? data[i + 1] : null;
 
-    console.log(nextRow);
-
     if (nextRow) {
       const pageContent: Content = {
         stack: [
@@ -151,7 +154,7 @@ const generateSmallPoster = (data: posterContent[]): TDocumentDefinitions => {
             absolutePosition: { x: 280, y: 335 },
           },
           {
-            text: row.preco.replace(".", ","),
+            text: asText(row.preco).replace(".", ","),
             bold: true,
             fontSize: 76,
             alignment: "center",
@@ -187,7 +190,7 @@ const generateSmallPoster = (data: posterContent[]): TDocumentDefinitions => {
             absolutePosition: { x: 280, y: 745 },
           },
           {
-            text: nextRow.preco.replace(".", ","),
+            text: asText(nextRow.preco).replace(".", ","),
             fontSize: 76,
             alignment: "center",
             absolutePosition: { x: 280, y: 688 },
@@ -233,7 +236,7 @@ const generateSmallPoster = (data: posterContent[]): TDocumentDefinitions => {
             absolutePosition: { x: 280, y: 335 },
           },
           {
-            text: row.preco.replace(".", ","),
+            text: asText(row.preco).replace(".", ","),
             bold: true,
             fontSize: 76,
             alignment: "center",
@@ -327,7 +330,7 @@ const generateComboPoster = (data: comboPosterContent[]): TDocumentDefinitions =
           row.comboVlr
             ? [
               {
-                text: `NESTA OFERTA A UNIDADE SAI POR R$${row.comboVlr.replace(".", ",")}`,
+                text: `NESTA OFERTA A UNIDADE SAI POR R$${asText(row.comboVlr).replace(".", ",")}`,
                 bold: true,
                 fontSize: 18,
                 alignment: "center",
