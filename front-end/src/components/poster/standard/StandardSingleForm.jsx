@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { posterService } from "../../../services/posterService";
+import { getRequestErrorMessage } from "../../../services/requestError";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdDownload } from "react-icons/md";
 
@@ -14,19 +15,20 @@ function StandardSingleForm() {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [isSubmiting, setIsSubmiting] = useState(false);
   const [reqResponse, setReqResponse] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const formValues = watch();
 
   useEffect(() => {
-    if (downloadUrl) {
-      setDownloadUrl("");
-      setReqResponse("");
-    }
+    setDownloadUrl("");
+    setReqResponse("");
+    setSubmitError("");
   }, [formValues.produto, formValues.preco, formValues.medida, formValues.limite, posterSize]);
 
   const onSubmit = async (data) => {
     setDownloadUrl("");
     setReqResponse("");
+    setSubmitError("");
     setIsSubmiting(true);
 
     const formatedData = {
@@ -42,11 +44,13 @@ function StandardSingleForm() {
       if (responseData.status === "Success") {
         setDownloadUrl(responseData.download);
         setReqResponse(responseData.message);
+      } else {
+        setSubmitError(responseData.message || "Erro ao criar cartaz. Por favor, tente novamente.");
       }
-      setIsSubmiting(false);
     } catch (error) {
       console.error("Erro ao criar cartaz:", error);
-      setReqResponse("Erro ao criar cartaz. Por favor, tente novamente.");
+      setSubmitError(getRequestErrorMessage(error));
+    } finally {
       setIsSubmiting(false);
     }
   };
@@ -113,13 +117,17 @@ function StandardSingleForm() {
 
         <SwitchPosterSize handleSizeChange={(e) => setPosterSize(e)} errors={errors} />
 
+        {submitError && (
+          <p role="alert" className="mb-2 text-center text-sm font-bold text-destructive">{submitError}</p>
+        )}
+
         {isSubmiting ? (
           <Button type="submit" text={
             <div className="mx-8 inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" role="status">
             </div>
           } disabled={true} />
         ) : (
-          <Button type="submit" text="Criar Cartaz" disabled={isSubmiting || reqResponse} />
+          <Button type="submit" text="Criar Cartaz" disabled={!!downloadUrl} />
         )}
       </form>
 
@@ -142,6 +150,7 @@ function StandardSingleForm() {
                   onClick={() => {
                     setDownloadUrl("");
                     setReqResponse("");
+                    setSubmitError("");
                     setIsSubmiting(false);
                     reset();
                   }}

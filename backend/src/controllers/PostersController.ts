@@ -3,6 +3,7 @@ import { generatePosterService } from "../services/GeneratePostersService";
 import { createDirectory } from "../utils/createDirectory";
 import { posterContent, comboPosterContent } from "../types/posterContent";
 import path from 'path';
+import { randomUUID } from 'crypto';
 
 const expectedHeaders = {
   defaultPoster: [
@@ -17,29 +18,62 @@ const expectedHeaders = {
   ]
 };
 
+const MAX_ROWS = 200;
+
+type ValidationResult =
+  | { ok: true }
+  | { ok: false; message: string };
+
+const validateSheet = (sheet: unknown, headers: string[]): ValidationResult => {
+  if (!Array.isArray(sheet) || sheet.length === 0) {
+    return { ok: false, message: "Nenhum item foi enviado para a criação dos cartazes." };
+  }
+
+  if (sheet.length > MAX_ROWS) {
+    return { ok: false, message: `Limite de ${MAX_ROWS} cartazes por requisição excedido.` };
+  }
+
+  const rowsAreValid = sheet.every((item) =>
+    item !== null &&
+    typeof item === "object" &&
+    !Array.isArray(item) &&
+    headers.every((header) => {
+      const value = (item as Record<string, unknown>)[header];
+      return (typeof value === "string" || typeof value === "number") && String(value).trim() !== "";
+    })
+  );
+
+  if (!rowsAreValid) {
+    return { ok: false, message: "Verifique se o conteúdo enviado na planilha está correto" };
+  }
+
+  return { ok: true };
+};
+
+const buildPdfPath = () => {
+  const pdfDirectory = path.resolve(__dirname, '../../pdfs');
+  createDirectory(pdfDirectory);
+
+  const pdfFileName = `Cartaz_${randomUUID()}.pdf`;
+
+  return { pdfFileName, pdfFilePath: path.resolve(pdfDirectory, pdfFileName) };
+};
+
 export const generateSmallPoster = async (req: Request, res: Response) => {
   try {
     const sheet: posterContent[] = req.body.sheet;
     const tamanho = "cartaz-pequeno";
 
-    const sheetHeaders = sheet.every(item =>
-      expectedHeaders.defaultPoster.every(header => item.hasOwnProperty(header))
-    );
+    const validation = validateSheet(sheet, expectedHeaders.defaultPoster);
 
-    console.log(sheet);
-    if (!sheetHeaders) {
+    if (!validation.ok) {
       return res.status(400).json({
         status: "Fail",
-        message: "Verifique se o conteúdo enviado na planilha está correto"
+        message: validation.message
       });
     }
 
-    const pdfDirectory = path.resolve(__dirname, '../../pdfs');
-    createDirectory(pdfDirectory);
-
-    const pdfFileName = `Cartaz_${new Date().
-      getDate()}_${new Date().getMonth() + 1}_${Math.random().toFixed(2)}.pdf`;
-    const pdfFilePath = path.resolve(pdfDirectory, pdfFileName);
+    const { pdfFileName, pdfFilePath } = buildPdfPath();
 
     await generatePosterService(sheet, pdfFilePath, tamanho);
 
@@ -50,9 +84,10 @@ export const generateSmallPoster = async (req: Request, res: Response) => {
       download: downloadUrl
     });
   } catch (e) {
+    console.error("Erro ao gerar cartaz pequeno:", e);
     return res.status(500).json({
       status: "Error",
-      message: "Something went wrong"
+      message: "Não foi possível gerar os cartazes. Tente novamente."
     });
   }
 };
@@ -62,24 +97,16 @@ export const generateBigPoster = async (req: Request, res: Response) => {
     const sheet: posterContent[] = req.body.sheet;
     const tamanho = "cartaz-grande";
 
-    const sheetHeaders = sheet.every(item =>
-      expectedHeaders.defaultPoster.every(header => item.hasOwnProperty(header))
-    );
+    const validation = validateSheet(sheet, expectedHeaders.defaultPoster);
 
-    console.log(sheet);
-    if (!sheetHeaders) {
+    if (!validation.ok) {
       return res.status(400).json({
         status: "Fail",
-        message: "Verifique se o conteúdo enviado na planilha está correto"
+        message: validation.message
       });
     }
 
-    const pdfDirectory = path.resolve(__dirname, '../../pdfs');
-    createDirectory(pdfDirectory);
-
-    const pdfFileName = `Cartaz_${new Date().
-      getDate()}_${new Date().getMonth() + 1}_${Math.random().toFixed(2)}.pdf`;
-    const pdfFilePath = path.resolve(pdfDirectory, pdfFileName);
+    const { pdfFileName, pdfFilePath } = buildPdfPath();
 
     await generatePosterService(sheet, pdfFilePath, tamanho);
 
@@ -90,9 +117,10 @@ export const generateBigPoster = async (req: Request, res: Response) => {
       download: downloadUrl
     });
   } catch (e) {
+    console.error("Erro ao gerar cartaz grande:", e);
     return res.status(500).json({
       status: "Error",
-      message: "Something went wrong"
+      message: "Não foi possível gerar os cartazes. Tente novamente."
     });
   }
 };
@@ -102,23 +130,17 @@ export const generateComboPoster = async (req: Request, res: Response) => {
     const sheet: comboPosterContent[] = req.body.sheet;
     const tamanho = "cartaz-combo";
 
-    const sheetHeaders = sheet.every(item =>
-      expectedHeaders.comboPoster.every(header => item.hasOwnProperty(header))
-    );
+    const validation = validateSheet(sheet, expectedHeaders.comboPoster);
 
-    console.log(sheet);
-    if (!sheetHeaders) {
+    if (!validation.ok) {
       return res.status(400).json({
         status: "Fail",
-        message: "Verifique se o conteúdo enviado na planilha está correto"
+        message: validation.message
       });
     }
-    const pdfDirectory = path.resolve(__dirname, '../../pdfs');
-    createDirectory(pdfDirectory);
 
-    const pdfFileName = `Cartaz_${new Date().
-      getDate()}_${new Date().getMonth() + 1}_${Math.random().toFixed(2)}.pdf`;
-    const pdfFilePath = path.resolve(pdfDirectory, pdfFileName);
+    const { pdfFileName, pdfFilePath } = buildPdfPath();
+
     await generatePosterService(sheet, pdfFilePath, tamanho);
 
     const downloadUrl = `${req.protocol}://${req.get('host')}/pdfs/${pdfFileName}`;
@@ -129,9 +151,10 @@ export const generateComboPoster = async (req: Request, res: Response) => {
     });
 
   } catch (e) {
+    console.error("Erro ao gerar cartaz combo:", e);
     return res.status(500).json({
       status: "Error",
-      message: "Something went wrong"
+      message: "Não foi possível gerar os cartazes. Tente novamente."
     });
   }
 };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { posterService } from "../../../services/posterService";
+import { getRequestErrorMessage } from "../../../services/requestError";
 
 import { sheetReaderService } from "../../../services/sheetReader";
 
@@ -18,6 +19,7 @@ function ComboSheetUpload() {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [isSubmiting, setIsSubmiting] = useState(false);
   const [reqResponse, setReqResponse] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const imageComboPoster = "/assets/images/tabela-modelo-cartaz-combo.png";
   const modelComboPosterxls = "/assets/sheets/modelo-cartaz-combo.xlsx";
@@ -25,18 +27,17 @@ function ComboSheetUpload() {
 
   const fileWatch = watch("file");
   const { dataArray, loading: dataLoading, error } = sheetReaderService.comboPoster(fileWatch);
-  console.log(dataArray);
 
   useEffect(() => {
-    if (downloadUrl) {
-      setDownloadUrl("");
-      setReqResponse("");
-    }
+    setDownloadUrl("");
+    setReqResponse("");
+    setSubmitError("");
   }, [fileWatch]);
 
   const onSubmit = async () => {
     setDownloadUrl("");
     setReqResponse("");
+    setSubmitError("");
     setIsSubmiting(true);
 
 
@@ -46,16 +47,17 @@ function ComboSheetUpload() {
 
     try {
       const responseData = await posterService.generateComboPoster(formatedData);
-      console.log(responseData);
 
       if (responseData.status === "Success") {
         setDownloadUrl(responseData.download);
         setReqResponse(responseData.message);
+      } else {
+        setSubmitError(responseData.message || "Erro ao criar cartaz. Por favor, tente novamente.");
       }
-      setIsSubmiting(false);
     } catch (error) {
       console.error("Erro ao criar cartaz:", error);
-      setReqResponse("Erro ao criar cartaz. Por favor, tente novamente.");
+      setSubmitError(getRequestErrorMessage(error));
+    } finally {
       setIsSubmiting(false);
     }
   };
@@ -83,13 +85,17 @@ function ComboSheetUpload() {
         {error && <p className="text-center text-sm font-bold text-destructive">{error}</p>}
 
 
+        {submitError && (
+          <p role="alert" className="mb-2 text-center text-sm font-bold text-destructive">{submitError}</p>
+        )}
+
         {isSubmiting ? (
           <Button type="submit" text={
             <div className="mx-8 inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" role="status">
             </div>
           } disabled={true} />
         ) : (
-          <Button type="submit" text="Criar Cartaz" disabled={!!error || dataLoading || isSubmiting || reqResponse} />
+          <Button type="submit" text="Criar Cartaz" disabled={!!error || dataLoading || !!downloadUrl} />
         )}
 
         <div className="my-2 flex justify-center py-2 text-card-foreground">
@@ -143,6 +149,7 @@ function ComboSheetUpload() {
                   onClick={() => {
                     setDownloadUrl("");
                     setReqResponse("");
+                    setSubmitError("");
                     setIsSubmiting(false);
                     reset();
                   }}

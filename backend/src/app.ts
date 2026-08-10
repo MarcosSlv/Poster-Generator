@@ -1,18 +1,28 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { router } from "./routes/index";
 
 import cors from "cors";
 import path from "path";
+import rateLimit from "express-rate-limit";
 
 const allowedOrigins = (process.env.CORS_ORIGIN ?? "").split(",").map((origin) => origin.trim()).filter(Boolean);
 
+if (allowedOrigins.length === 0) {
+  console.warn("CORS_ORIGIN não configurado: todas as origens serão aceitas.");
+}
+
+class CorsError extends Error {
+  constructor(origin: string) {
+    super(`Origem não permitida pelo CORS: ${origin}`);
+    this.name = "CorsError";
+  }
+}
+
 export const app = express();
-
-
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin) {
+    if (!origin || allowedOrigins.length === 0) {
       return callback(null, true);
     }
 
@@ -20,7 +30,7 @@ app.use(cors({
       return callback(null, true);
     }
 
-    return callback(null, true);
+    return callback(new CorsError(origin));
   },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -31,6 +41,31 @@ app.use(cors({
 app.use("/pdfs", express.static(path.resolve(__dirname, "../pdfs")));
 app.use("/public", express.static(path.resolve(__dirname, "../utils")));
 
-app.use(express.json({ limit: "20mb" }));
+app.use(express.json({ limit: "1mb" }));
 
-app.use("/api", router);
+app.use("/api", rateLimit({
+  windowMs: 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: {
+    status: "Fail",
+    message: "Muitas requisições em pouco tempo. Aguarde um instante e tente novamente."
+  }
+}), router);
+
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof CorsError) {
+    return res.status(403).json({
+      status: "Fail",
+      message: "Origem não autorizada."
+    });
+  }
+
+  console.error("Erro não tratado:", err);
+
+  return res.status(500).json({
+    status: "Error",
+    message: "Não foi possível processar a requisição."
+  });
+});
