@@ -6,7 +6,8 @@ Segunda etapa de melhorias, focada em duplicação, testabilidade e manutenibili
 mudança de funcionalidade: **os PDFs gerados são idênticos aos anteriores**, e isso foi
 verificado comparando o conteúdo dos arquivos antes e depois (ver seção Verificação).
 
-A etapa anterior, de bugs e segurança, está em [CORRECOES.md](CORRECOES.md).
+Antecedida por uma etapa de correção de bugs e vulnerabilidades, no commit
+`Corrige bugs de fluxo de erro e vulnerabilidades de seguranca`.
 
 ## Resumo
 
