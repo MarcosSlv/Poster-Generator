@@ -1,6 +1,6 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 import HelpModal from "../modal/HelpModal";
 
@@ -24,20 +24,12 @@ function SheetHelp({ imagePath, fileDownloadPath }) {
 
       <AnimatePresence>
         {isModalOpen && (
-          <motion.div
-            key="modal"
-            className="fixed inset-0 z-40 flex justify-center items-center backdrop-blur-md"
-            initial={{ opacity: 0, scale: 0, y: -50, boxShadow: "0px 0px 0px rgba(0,0,0,0)" }}
-            animate={{ opacity: 1, scale: 1, y: 0, boxShadow: "0px 30px 60px rgba(0,0,0,1)" }}
-            exit={{ opacity: 0, scale: 0, y: 50, boxShadow: "0px 0px 0px rgba(0,0,0,0)" }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <HelpModal
-              fileDownloadPath={fileDownloadPath}
-              imagePath={imagePath}
-              onClose={() => setIsModalOpen(false)}
-            />
-          </motion.div>
+          <HelpModal
+            key="help-modal"
+            fileDownloadPath={fileDownloadPath}
+            imagePath={imagePath}
+            onClose={() => setIsModalOpen(false)}
+          />
         )}
       </AnimatePresence>
     </>
