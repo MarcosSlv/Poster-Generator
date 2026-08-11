@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 
 import Button from "../ui/Button";
+import Spinner from "../ui/Spinner";
 
 function SubmitPosterButton({ isSubmiting, disabled = false }) {
   return (
@@ -9,13 +10,7 @@ function SubmitPosterButton({ isSubmiting, disabled = false }) {
         <Button
           type="submit"
           disabled
-          text={
-            <span
-              role="status"
-              aria-label="Criando cartazes"
-              className="mx-8 inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent"
-            />
-          }
+          text={<Spinner label="Criando cartazes" className="mx-8" />}
         />
       ) : (
         <Button type="submit" text="Criar Cartaz" disabled={disabled} />

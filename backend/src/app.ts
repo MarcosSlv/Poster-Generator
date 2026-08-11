@@ -45,6 +45,17 @@ app.use("/public", express.static(path.resolve(__dirname, "../utils")));
 
 app.use(express.json({ limit: "1mb" }));
 
+app.use("/api/assistant", rateLimit({
+  windowMs: 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: {
+    status: "Fail",
+    message: "Muitos pedidos ao assistente em pouco tempo. Aguarde um instante e tente novamente."
+  }
+}));
+
 app.use("/api", rateLimit({
   windowMs: 60 * 1000,
   limit: 20,

@@ -5,13 +5,7 @@ import { randomUUID } from 'crypto';
 import { generatePosterService } from "../services/GeneratePostersService";
 import { createDirectory } from "../utils/createDirectory";
 import { posterContent, comboPosterContent } from "../types/posterContent";
-
-export const MAX_ROWS = 200;
-
-export const REQUIRED_FIELDS = {
-  default: ["produto", "preco", "medida"],
-  combo: ["produto", "medida", "comboQtd"]
-};
+import { REQUIRED_FIELDS, validateSheet } from "../services/sheetValidation";
 
 type PosterKind = {
   tamanho: string;
@@ -23,36 +17,6 @@ const POSTER_KINDS: Record<"big" | "small" | "combo", PosterKind> = {
   big: { tamanho: "cartaz-grande", requiredFields: REQUIRED_FIELDS.default, label: "grande" },
   small: { tamanho: "cartaz-pequeno", requiredFields: REQUIRED_FIELDS.default, label: "pequeno" },
   combo: { tamanho: "cartaz-combo", requiredFields: REQUIRED_FIELDS.combo, label: "combo" }
-};
-
-type ValidationResult =
-  | { ok: true }
-  | { ok: false; message: string };
-
-const isFilled = (value: unknown) =>
-  (typeof value === "string" || typeof value === "number") && String(value).trim() !== "";
-
-export const validateSheet = (sheet: unknown, requiredFields: string[]): ValidationResult => {
-  if (!Array.isArray(sheet) || sheet.length === 0) {
-    return { ok: false, message: "Nenhum item foi enviado para a criação dos cartazes." };
-  }
-
-  if (sheet.length > MAX_ROWS) {
-    return { ok: false, message: `Limite de ${MAX_ROWS} cartazes por requisição excedido.` };
-  }
-
-  const rowsAreValid = sheet.every((item) =>
-    item !== null &&
-    typeof item === "object" &&
-    !Array.isArray(item) &&
-    requiredFields.every((field) => isFilled((item as Record<string, unknown>)[field]))
-  );
-
-  if (!rowsAreValid) {
-    return { ok: false, message: "Verifique se o conteúdo enviado na planilha está correto" };
-  }
-
-  return { ok: true };
 };
 
 const buildPdfPath = () => {

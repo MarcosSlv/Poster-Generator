@@ -8,10 +8,17 @@ import ComboSingleForm from "../../components/poster/combo/ComboSingleForm";
 import StandardSingleForm from "../../components/poster/standard/StandardSingleForm";
 import StandardSheetUpload from "../../components/poster/standard/StandardSheetUpload";
 import ComboSheetUpload from "../../components/poster/combo/ComboSheetUpload";
+import SheetAssistant from "../../components/poster/SheetAssistant";
+
+const TRIGGER_CLASS = "px-6 py-3 font-medium transition hover:text-secondary data-[state=active]:-mb-[2px] data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary";
+
+const TRANSITION = { duration: 0.3, ease: "easeOut" };
 
 function Home() {
   const [processType, setProcessType] = useState("Individuais");
   const [modelType, setModelType] = useState("Padrão");
+
+  const isAssistant = processType === "Assistente";
 
   const renderForm = () => {
     const formConfig = {
@@ -36,69 +43,72 @@ function Home() {
           <div className="flex justify-center mb-6">
             <Tabs.Root value={processType} onValueChange={setProcessType} className="w-full max-w-md">
               <Tabs.List className="flex justify-center gap-2 border-b-2 border-border text-muted-foreground">
-                <Tabs.Trigger
-                  value="Individuais"
-                  className="px-6 py-3 font-medium transition hover:text-secondary data-[state=active]:-mb-[2px] data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary"
-                >
+                <Tabs.Trigger value="Individuais" className={TRIGGER_CLASS}>
                   Individuais
                 </Tabs.Trigger>
-                <Tabs.Trigger
-                  value="Planilhas"
-                  className="px-6 py-3 font-medium transition hover:text-secondary data-[state=active]:-mb-[2px] data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary"
-                >
+                <Tabs.Trigger value="Planilhas" className={TRIGGER_CLASS}>
                   Planilhas
+                </Tabs.Trigger>
+                <Tabs.Trigger value="Assistente" className={TRIGGER_CLASS}>
+                  Assistente
                 </Tabs.Trigger>
               </Tabs.List>
             </Tabs.Root>
           </div>
 
-
-
           <div className="form-container mx-auto max-w-lg rounded-lg border border-border bg-card p-6 text-card-foreground shadow-md">
-            <Tabs.Root value={modelType} onValueChange={setModelType} className="w-full">
-              <Tabs.List className="mb-6 flex justify-center gap-2 border-b-2 border-border text-muted-foreground">
-                <Tabs.Trigger
-                  value="Padrão"
-                  className="px-6 py-3 font-medium transition hover:text-secondary data-[state=active]:-mb-[2px] data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary"
+            {isAssistant ? (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key="Assistente"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={TRANSITION}
                 >
-                  Padrão
-                </Tabs.Trigger>
-                <Tabs.Trigger
-                  value="Combo"
-                  className="px-6 py-3 font-medium transition hover:text-secondary data-[state=active]:-mb-[2px] data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary"
-                >
-                  Combo
-                </Tabs.Trigger>
-              </Tabs.List>
+                  <SheetAssistant />
+                </motion.div>
+              </AnimatePresence>
+            ) : (
+              <Tabs.Root value={modelType} onValueChange={setModelType} className="w-full">
+                <Tabs.List className="mb-6 flex justify-center gap-2 border-b-2 border-border text-muted-foreground">
+                  <Tabs.Trigger value="Padrão" className={TRIGGER_CLASS}>
+                    Padrão
+                  </Tabs.Trigger>
+                  <Tabs.Trigger value="Combo" className={TRIGGER_CLASS}>
+                    Combo
+                  </Tabs.Trigger>
+                </Tabs.List>
 
-              <Tabs.Content value="Padrão">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`${processType}-Padrão`}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                  >
-                    {renderForm()}
-                  </motion.div>
-                </AnimatePresence>
-              </Tabs.Content>
+                <Tabs.Content value="Padrão">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${processType}-Padrão`}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={TRANSITION}
+                    >
+                      {renderForm()}
+                    </motion.div>
+                  </AnimatePresence>
+                </Tabs.Content>
 
-              <Tabs.Content value="Combo">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`${processType}-Combo`}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                  >
-                    {renderForm()}
-                  </motion.div>
-                </AnimatePresence>
-              </Tabs.Content>
-            </Tabs.Root>
+                <Tabs.Content value="Combo">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${processType}-Combo`}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={TRANSITION}
+                    >
+                      {renderForm()}
+                    </motion.div>
+                  </AnimatePresence>
+                </Tabs.Content>
+              </Tabs.Root>
+            )}
           </div>
         </div>
       </div>

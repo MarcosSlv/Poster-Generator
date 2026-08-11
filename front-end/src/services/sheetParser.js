@@ -1,17 +1,26 @@
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 
 export const SHEET_LAYOUTS = {
   standard: {
     requiredHeaders: ["produto", "medida", "preco"],
     currencyHeaders: ["preco"],
-    headerAliases: {}
+    headerAliases: {},
+    columns: ["produto", "medida", "preco", "limite"],
+    columnLabels: ["Produto", "Medida", "Preco", "Limite"]
   },
   combo: {
     requiredHeaders: ["produto", "medida", "combovlr", "comboqtd"],
     currencyHeaders: ["combovlr"],
-    headerAliases: { combovlr: "comboVlr", comboqtd: "comboQtd" }
+    headerAliases: { combovlr: "comboVlr", comboqtd: "comboQtd" },
+    columns: ["produto", "medida", "comboVlr", "comboQtd"],
+    columnLabels: ["Produto", "Medida", "Combovlr", "Comboqtd"]
   }
 };
+
+export const rowsToTsv = (rows, columns) =>
+  rows
+    .map((row) => columns.map((column) => String(row[column] ?? '')).join('\t'))
+    .join('\n');
 
 export const MESSAGES = {
   invalidHeaders: "Cabeçalhos da planilha incorretos.",

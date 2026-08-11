@@ -40,6 +40,16 @@ exports.app.use((0, cors_1.default)({
 exports.app.use("/pdfs", express_1.default.static(path_1.default.resolve(__dirname, "../pdfs")));
 exports.app.use("/public", express_1.default.static(path_1.default.resolve(__dirname, "../utils")));
 exports.app.use(express_1.default.json({ limit: "1mb" }));
+exports.app.use("/api/assistant", (0, express_rate_limit_1.default)({
+    windowMs: 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: {
+        status: "Fail",
+        message: "Muitos pedidos ao assistente em pouco tempo. Aguarde um instante e tente novamente."
+    }
+}));
 exports.app.use("/api", (0, express_rate_limit_1.default)({
     windowMs: 60 * 1000,
     limit: 20,

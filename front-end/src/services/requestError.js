@@ -1,6 +1,6 @@
 const DEFAULT_MESSAGE = "Erro ao criar cartaz. Por favor, tente novamente.";
 
-export const getRequestErrorMessage = (error) => {
+export const getRequestErrorMessage = (error, fallback = DEFAULT_MESSAGE) => {
   if (error?.code === "ECONNABORTED") {
     return "O servidor demorou demais para responder. Tente novamente em alguns instantes.";
   }
@@ -10,12 +10,12 @@ export const getRequestErrorMessage = (error) => {
   }
 
   if (error?.response) {
-    return DEFAULT_MESSAGE;
+    return fallback;
   }
 
   if (error?.request) {
     return "Não foi possível falar com o servidor. Verifique sua conexão e tente novamente.";
   }
 
-  return DEFAULT_MESSAGE;
+  return fallback;
 };

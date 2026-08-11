@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = require("express");
 const posters_routes_1 = __importDefault(require("./posters.routes"));
+const assistant_routes_1 = __importDefault(require("./assistant.routes"));
 const router = (0, express_1.Router)();
 exports.router = router;
 router.use("/posters", posters_routes_1.default);
+router.use("/assistant", assistant_routes_1.default);
