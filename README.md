@@ -104,8 +104,3 @@ minúsculas ou espaços em volta.
 |---|---|
 | Padrão | `produto`, `preco`, `medida`, `limite` (opcional) |
 | Combo | `produto`, `medida`, `comboVlr`, `comboQtd` |
-
-## Documentos
-
-- [CORRECOES.md](CORRECOES.md) — correções de bugs e de segurança
-- [QUALIDADE.md](QUALIDADE.md) — refatorações de qualidade de código
