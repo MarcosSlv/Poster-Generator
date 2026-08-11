@@ -5,7 +5,9 @@ import cors from "cors";
 import path from "path";
 import rateLimit from "express-rate-limit";
 
-const allowedOrigins = (process.env.CORS_ORIGIN ?? "").split(",").map((origin) => origin.trim()).filter(Boolean);
+const normalizeOrigin = (origin: string) => origin.trim().toLowerCase().replace(/\/+$/, "");
+
+const allowedOrigins = (process.env.CORS_ORIGIN ?? "").split(",").map(normalizeOrigin).filter(Boolean);
 
 if (allowedOrigins.length === 0) {
   console.warn("CORS_ORIGIN não configurado: todas as origens serão aceitas.");
@@ -28,7 +30,7 @@ app.use(cors({
       return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(normalizeOrigin(origin))) {
       return callback(null, true);
     }
 

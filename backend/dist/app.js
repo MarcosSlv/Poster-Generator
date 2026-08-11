@@ -10,7 +10,8 @@ const index_1 = require("./routes/index");
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
-const allowedOrigins = ((_a = process.env.CORS_ORIGIN) !== null && _a !== void 0 ? _a : "").split(",").map((origin) => origin.trim()).filter(Boolean);
+const normalizeOrigin = (origin) => origin.trim().toLowerCase().replace(/\/+$/, "");
+const allowedOrigins = ((_a = process.env.CORS_ORIGIN) !== null && _a !== void 0 ? _a : "").split(",").map(normalizeOrigin).filter(Boolean);
 if (allowedOrigins.length === 0) {
     console.warn("CORS_ORIGIN não configurado: todas as origens serão aceitas.");
 }
@@ -27,7 +28,7 @@ exports.app.use((0, cors_1.default)({
         if (!origin || allowedOrigins.length === 0) {
             return callback(null, true);
         }
-        if (allowedOrigins.includes(origin)) {
+        if (allowedOrigins.includes(normalizeOrigin(origin))) {
             return callback(null, true);
         }
         return callback(new CorsError(origin));
