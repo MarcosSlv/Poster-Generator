@@ -1,7 +1,8 @@
 {
-  "name": "excellapi",
+  "name": "poster-generator-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "main": "dist/server.js",
   "license": "MIT",
   "scripts": {
     "start": "node dist/server.js",

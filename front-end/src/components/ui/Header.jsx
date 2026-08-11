@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 function HeaderComponent({ title }) {
   return (
     <div className="container mx-auto my-2">
@@ -11,5 +13,9 @@ function HeaderComponent({ title }) {
     </div>
   );
 }
+
+HeaderComponent.propTypes = {
+  title: PropTypes.string.isRequired
+};
 
 export default HeaderComponent;

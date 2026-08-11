@@ -40,6 +40,8 @@ const pdfmake_1 = __importDefault(require("pdfmake/build/pdfmake"));
 const fs = __importStar(require("fs"));
 const fs_1 = require("fs");
 const path_1 = __importDefault(require("path"));
+const posterText_1 = require("./posterText");
+const posterLayout_1 = require("./posterLayout");
 const urbaneFontPath = path_1.default.join(__dirname, "..", "utils", "fonts", "Urbane-Bold.ttf");
 const urbaneFont = fs.readFileSync(urbaneFontPath).toString("base64");
 pdfmake_1.default.vfs = {
@@ -50,325 +52,112 @@ pdfmake_1.default.fonts = {
         bold: "Urbane-Bold.ttf",
     },
 };
-const asText = (value) => value === null || value === undefined ? "" : String(value);
+const text = (content, spec) => (Object.assign(Object.assign(Object.assign({ text: content, bold: true, fontSize: spec.fontSize }, (spec.alignment ? { alignment: spec.alignment } : {})), (spec.noWrap ? { noWrap: true } : {})), { absolutePosition: { x: spec.x, y: spec.y } }));
+const document = (content, pageMargins) => ({
+    pageSize: "A4",
+    pageMargins,
+    content,
+    defaultStyle: {
+        font: "Urbane",
+        bold: true
+    }
+});
+const withPageBreak = (page, hasNext) => {
+    if (hasNext) {
+        page.stack.push({ text: "", pageBreak: "after" });
+    }
+    return page;
+};
+const smallPosterBlock = (row, spec) => {
+    const block = [
+        text((0, posterText_1.formatText)(row.produto), spec.produto),
+        text("R$", spec.moeda),
+        text((0, posterText_1.asPrice)(row.preco), spec.preco),
+        text((0, posterText_1.asText)(row.medida), spec.medida)
+    ];
+    if (row.limite) {
+        block.push(text(`LIMITADO A ${row.limite} POR CLIENTE`, spec.limite));
+    }
+    return block;
+};
+const generateBigPoster = (data) => {
+    const content = data.map((row, index) => {
+        const page = {
+            stack: [
+                text((0, posterText_1.formatText)(row.produto), posterLayout_1.BIG_POSTER.produto),
+                text("POR:", posterLayout_1.BIG_POSTER.por),
+                text("R$", posterLayout_1.BIG_POSTER.moeda),
+                text((0, posterText_1.asPrice)(row.preco), posterLayout_1.BIG_POSTER.preco),
+                text((0, posterText_1.asText)(row.medida), posterLayout_1.BIG_POSTER.medida)
+            ],
+            margin: posterLayout_1.STACK_MARGINS.big
+        };
+        if (row.limite) {
+            page.stack.push(text(`LIMITADO A ${row.limite} POR CLIENTE`, posterLayout_1.BIG_POSTER.limite));
+        }
+        return withPageBreak(page, index < data.length - 1);
+    });
+    return document(content, posterLayout_1.PAGE_MARGINS.big);
+};
+const generateSmallPoster = (data) => {
+    const content = [];
+    for (let i = 0; i < data.length; i += 2) {
+        const nextRow = data[i + 1];
+        const page = {
+            stack: [
+                ...smallPosterBlock(data[i], posterLayout_1.SMALL_POSTER.top),
+                ...(nextRow ? smallPosterBlock(nextRow, posterLayout_1.SMALL_POSTER.bottom) : [])
+            ],
+            margin: posterLayout_1.STACK_MARGINS.small
+        };
+        content.push(withPageBreak(page, i + 2 < data.length));
+    }
+    return document(content, posterLayout_1.PAGE_MARGINS.small);
+};
+const generateComboPoster = (data) => {
+    const content = data.map((row, index) => {
+        const unidades = `${row.comboQtd} UNIDADE${Number(row.comboQtd) > 1 ? 'S' : ''} POR:`;
+        const page = {
+            stack: [
+                text(posterLayout_1.COMBO_SELO, posterLayout_1.COMBO_POSTER.selo),
+                text((0, posterText_1.formatText)(row.produto), posterLayout_1.COMBO_POSTER.produto),
+                text(unidades, posterLayout_1.COMBO_POSTER.chamada),
+                text("R$", posterLayout_1.COMBO_POSTER.moeda),
+                text(posterLayout_1.COMBO_PRECO, posterLayout_1.COMBO_POSTER.preco),
+                text((0, posterText_1.asText)(row.medida), posterLayout_1.COMBO_POSTER.medida)
+            ],
+            margin: posterLayout_1.STACK_MARGINS.combo
+        };
+        if (row.comboVlr) {
+            page.stack.push(text(`NESTA OFERTA A UNIDADE SAI POR R$${(0, posterText_1.asPrice)(row.comboVlr)}`, posterLayout_1.COMBO_POSTER.unidade));
+        }
+        return withPageBreak(page, index < data.length - 1);
+    });
+    return document(content, posterLayout_1.PAGE_MARGINS.combo);
+};
+const POSTER_BUILDERS = {
+    "cartaz-pequeno": generateSmallPoster,
+    "cartaz-combo": generateComboPoster,
+    "cartaz-grande": generateBigPoster
+};
 const generatePosterService = (data, outputFilePath, tamanho) => __awaiter(void 0, void 0, void 0, function* () {
-    const validRows = data.filter((row) => asText(row.produto).trim() !== ""
-        && ('preco' in row ? asText(row.preco).trim() !== "" : true)
-        && asText(row.medida).trim() !== "");
-    let documentDefinitions;
-    if (tamanho === "cartaz-pequeno") {
-        documentDefinitions = generateSmallPoster(validRows);
-    }
-    else if (tamanho === "cartaz-combo") {
-        documentDefinitions = generateComboPoster(validRows);
-    }
-    else {
-        documentDefinitions = generateBigPoster(validRows);
-    }
-    const pdfDocGenerator = pdfmake_1.default.createPdf(documentDefinitions);
+    var _a;
+    const validRows = data.filter((row) => (0, posterText_1.asText)(row.produto).trim() !== ""
+        && ('preco' in row ? (0, posterText_1.asText)(row.preco).trim() !== "" : true)
+        && (0, posterText_1.asText)(row.medida).trim() !== "");
+    const build = (_a = POSTER_BUILDERS[tamanho]) !== null && _a !== void 0 ? _a : POSTER_BUILDERS["cartaz-grande"];
+    const pdfDocGenerator = pdfmake_1.default.createPdf(build(validRows));
     return new Promise((resolve, reject) => {
         pdfDocGenerator.getBuffer((buffer) => __awaiter(void 0, void 0, void 0, function* () {
             try {
                 yield fs_1.promises.writeFile(outputFilePath, new Uint8Array(buffer));
-                console.log("PDF criado com sucesso.");
                 resolve();
             }
             catch (err) {
-                console.error(err);
+                console.error("Erro ao gravar o PDF:", err);
                 reject(err);
             }
         }));
     });
 });
 exports.generatePosterService = generatePosterService;
-const formatText = (produto) => {
-    const formatedText = asText(produto).split(" ").map(palavra => palavra.length > 10 ? palavra.substring(0, 5) + "." : palavra).join(" ").toUpperCase();
-    return formatedText;
-};
-const generateBigPoster = (data) => {
-    const content = data.map((row, index) => {
-        const pageContent = {
-            stack: [
-                {
-                    text: formatText(row.produto),
-                    bold: true,
-                    fontSize: 50,
-                    alignment: "center",
-                    absolutePosition: { x: 35, y: 230 },
-                },
-                {
-                    text: "POR:",
-                    bold: true,
-                    fontSize: 30,
-                    alignment: "left",
-                    absolutePosition: { x: 50, y: 500 },
-                },
-                {
-                    text: "R$",
-                    bold: true,
-                    fontSize: 30,
-                    alignment: "left",
-                    absolutePosition: { x: 17, y: 720 },
-                },
-                {
-                    text: asText(row.preco).replace(".", ","),
-                    bold: true,
-                    fontSize: 170,
-                    alignment: "center",
-                    absolutePosition: { x: 10, y: 520 },
-                },
-                {
-                    text: row.medida,
-                    bold: true,
-                    fontSize: 30,
-                    alignment: "right",
-                    absolutePosition: { x: 0, y: 720 },
-                },
-            ],
-            margin: [0, 0, 0, 20],
-        };
-        if (row.limite) {
-            pageContent.stack.push({
-                text: `LIMITADO A ${row.limite} POR CLIENTE`,
-                bold: true,
-                fontSize: 24,
-                alignment: "center",
-                absolutePosition: { x: 10, y: 760 }
-            });
-        }
-        if (index < data.length - 1) {
-            pageContent.stack.push({ text: "", pageBreak: "after" });
-        }
-        return pageContent;
-    });
-    return {
-        pageSize: "A4",
-        pageMargins: [10, 10, 20, 10],
-        content: content,
-        defaultStyle: {
-            font: "Urbane",
-            bold: true
-        },
-    };
-};
-const generateSmallPoster = (data) => {
-    const content = [];
-    for (let i = 0; i < data.length; i += 2) {
-        const row = data[i];
-        const nextRow = data[i + 1] ? data[i + 1] : null;
-        if (nextRow) {
-            const pageContent = {
-                stack: [
-                    {
-                        text: formatText(row.produto),
-                        fontSize: 37,
-                        alignment: "center",
-                        absolutePosition: { x: 280, y: 80 },
-                    },
-                    {
-                        text: "R$",
-                        fontSize: 20,
-                        alignment: "left",
-                        absolutePosition: { x: 280, y: 335 },
-                    },
-                    {
-                        text: asText(row.preco).replace(".", ","),
-                        bold: true,
-                        fontSize: 76,
-                        alignment: "center",
-                        absolutePosition: { x: 280, y: 276 },
-                    },
-                    {
-                        text: row.medida,
-                        fontSize: 20,
-                        alignment: "right",
-                        absolutePosition: { x: 0, y: 335 },
-                    },
-                    ...(row.limite
-                        ? [
-                            {
-                                text: `LIMITADO A ${row.limite} POR CLIENTE`,
-                                fontSize: 12,
-                                bold: true,
-                                alignment: "center",
-                                absolutePosition: { x: 280, y: 370 },
-                            },
-                        ]
-                        : []),
-                    {
-                        text: formatText(nextRow.produto),
-                        fontSize: 37,
-                        alignment: "center",
-                        absolutePosition: { x: 280, y: 510 },
-                    },
-                    {
-                        text: "R$",
-                        fontSize: 20,
-                        alignment: "left",
-                        absolutePosition: { x: 280, y: 745 },
-                    },
-                    {
-                        text: asText(nextRow.preco).replace(".", ","),
-                        fontSize: 76,
-                        alignment: "center",
-                        absolutePosition: { x: 280, y: 688 },
-                    },
-                    {
-                        text: nextRow.medida,
-                        fontSize: 20,
-                        alignment: "right",
-                        absolutePosition: { x: 0, y: 745 },
-                    },
-                    ...(nextRow.limite
-                        ?
-                            [
-                                {
-                                    text: `LIMITADO A ${nextRow.limite} POR CLIENTE`,
-                                    fontSize: 12,
-                                    bold: true,
-                                    alignment: "center",
-                                    absolutePosition: { x: 280, y: 780 },
-                                }
-                            ]
-                        : []),
-                ],
-                margin: [0, 0, 0, 20],
-            };
-            if (i + 2 < data.length) {
-                pageContent.stack.push({ text: "", pageBreak: "after" });
-            }
-            content.push(pageContent);
-        }
-        else {
-            const pageContent = {
-                stack: [
-                    {
-                        text: formatText(row.produto),
-                        fontSize: 37,
-                        alignment: "center",
-                        absolutePosition: { x: 280, y: 80 },
-                    },
-                    {
-                        text: "R$",
-                        fontSize: 20,
-                        alignment: "left",
-                        absolutePosition: { x: 280, y: 335 },
-                    },
-                    {
-                        text: asText(row.preco).replace(".", ","),
-                        bold: true,
-                        fontSize: 76,
-                        alignment: "center",
-                        absolutePosition: { x: 280, y: 276 },
-                    },
-                    {
-                        text: row.medida,
-                        fontSize: 20,
-                        alignment: "right",
-                        absolutePosition: { x: 0, y: 335 },
-                    },
-                    ...(row.limite
-                        ? [
-                            {
-                                text: `LIMITADO A ${row.limite} POR CLIENTE`,
-                                fontSize: 12,
-                                bold: true,
-                                alignment: "center",
-                                absolutePosition: { x: 280, y: 370 },
-                            },
-                        ]
-                        : []),
-                ],
-                margin: [0, 0, 0, 20],
-            };
-            if (i + 2 < data.length) {
-                pageContent.stack.push({ text: "", pageBreak: "after" });
-            }
-            content.push(pageContent);
-        }
-    }
-    return {
-        pageSize: "A4",
-        pageMargins: [10, 10, 28, 10],
-        content: content,
-        defaultStyle: {
-            font: "Urbane",
-            bold: true
-        },
-    };
-};
-const generateComboPoster = (data) => {
-    const content = data.map((row, index) => {
-        const pageContent = {
-            stack: [
-                {
-                    text: "10ZÃO",
-                    bold: true,
-                    fontSize: 90,
-                    alignment: "right",
-                    absolutePosition: { x: 247, y: 128 },
-                },
-                {
-                    text: formatText(row.produto),
-                    bold: true,
-                    fontSize: 45,
-                    alignment: "center",
-                    absolutePosition: { x: 20, y: 262 }
-                },
-                {
-                    text: `${row.comboQtd} UNIDADE${Number(row.comboQtd) > 1 ? 'S' : ''} POR:`,
-                    bold: true,
-                    fontSize: 40,
-                    alignment: "center",
-                    absolutePosition: { x: 0, y: 515 },
-                },
-                {
-                    text: "R$",
-                    bold: true,
-                    fontSize: 24,
-                    alignment: "left",
-                    absolutePosition: { x: 12, y: 680 },
-                },
-                {
-                    text: "10,00",
-                    bold: true,
-                    fontSize: 175,
-                    alignment: "center",
-                    absolutePosition: { x: -3, y: 525 },
-                },
-                {
-                    text: row.medida,
-                    bold: true,
-                    fontSize: 24,
-                    noWrap: true,
-                    absolutePosition: { x: 534, y: 680 },
-                },
-                ...(row.comboVlr
-                    ? [
-                        {
-                            text: `NESTA OFERTA A UNIDADE SAI POR R$${asText(row.comboVlr).replace(".", ",")}`,
-                            bold: true,
-                            fontSize: 18,
-                            alignment: "center",
-                            absolutePosition: { x: 0, y: 750 },
-                        },
-                    ]
-                    : []),
-            ],
-            margin: [0, 0, 0, 25],
-        };
-        if (index < data.length - 1) {
-            pageContent.stack.push({ text: "", pageBreak: "after" });
-        }
-        return pageContent;
-    });
-    return {
-        pageSize: "A4",
-        pageMargins: [10, 10, 25, 10],
-        content,
-        defaultStyle: {
-            font: "Urbane",
-            bold: true
-        },
-    };
-};
