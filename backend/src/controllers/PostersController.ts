@@ -1,30 +1,38 @@
 import { Request, Response } from "express";
-import { generatePosterService } from "../services/GeneratePostersService";
-import { createDirectory } from "../utils/createDirectory";
-import { posterContent, comboPosterContent } from "../types/posterContent";
 import path from 'path';
 import { randomUUID } from 'crypto';
 
-const expectedHeaders = {
-  defaultPoster: [
-    "produto",
-    "preco",
-    "medida"
-  ],
-  comboPoster: [
-    "produto",
-    "medida",
-    "comboQtd"
-  ]
+import { generatePosterService } from "../services/GeneratePostersService";
+import { createDirectory } from "../utils/createDirectory";
+import { posterContent, comboPosterContent } from "../types/posterContent";
+
+export const MAX_ROWS = 200;
+
+export const REQUIRED_FIELDS = {
+  default: ["produto", "preco", "medida"],
+  combo: ["produto", "medida", "comboQtd"]
 };
 
-const MAX_ROWS = 200;
+type PosterKind = {
+  tamanho: string;
+  requiredFields: string[];
+  label: string;
+};
+
+const POSTER_KINDS: Record<"big" | "small" | "combo", PosterKind> = {
+  big: { tamanho: "cartaz-grande", requiredFields: REQUIRED_FIELDS.default, label: "grande" },
+  small: { tamanho: "cartaz-pequeno", requiredFields: REQUIRED_FIELDS.default, label: "pequeno" },
+  combo: { tamanho: "cartaz-combo", requiredFields: REQUIRED_FIELDS.combo, label: "combo" }
+};
 
 type ValidationResult =
   | { ok: true }
   | { ok: false; message: string };
 
-const validateSheet = (sheet: unknown, headers: string[]): ValidationResult => {
+const isFilled = (value: unknown) =>
+  (typeof value === "string" || typeof value === "number") && String(value).trim() !== "";
+
+export const validateSheet = (sheet: unknown, requiredFields: string[]): ValidationResult => {
   if (!Array.isArray(sheet) || sheet.length === 0) {
     return { ok: false, message: "Nenhum item foi enviado para a criação dos cartazes." };
   }
@@ -37,10 +45,7 @@ const validateSheet = (sheet: unknown, headers: string[]): ValidationResult => {
     item !== null &&
     typeof item === "object" &&
     !Array.isArray(item) &&
-    headers.every((header) => {
-      const value = (item as Record<string, unknown>)[header];
-      return (typeof value === "string" || typeof value === "number") && String(value).trim() !== "";
-    })
+    requiredFields.every((field) => isFilled((item as Record<string, unknown>)[field]))
   );
 
   if (!rowsAreValid) {
@@ -59,102 +64,39 @@ const buildPdfPath = () => {
   return { pdfFileName, pdfFilePath: path.resolve(pdfDirectory, pdfFileName) };
 };
 
-export const generateSmallPoster = async (req: Request, res: Response) => {
-  try {
-    const sheet: posterContent[] = req.body.sheet;
-    const tamanho = "cartaz-pequeno";
+const createPosterHandler = ({ tamanho, requiredFields, label }: PosterKind) =>
+  async (req: Request, res: Response) => {
+    try {
+      const sheet: posterContent[] | comboPosterContent[] = req.body.sheet;
 
-    const validation = validateSheet(sheet, expectedHeaders.defaultPoster);
+      const validation = validateSheet(sheet, requiredFields);
 
-    if (!validation.ok) {
-      return res.status(400).json({
-        status: "Fail",
-        message: validation.message
+      if (!validation.ok) {
+        return res.status(400).json({
+          status: "Fail",
+          message: validation.message
+        });
+      }
+
+      const { pdfFileName, pdfFilePath } = buildPdfPath();
+
+      await generatePosterService(sheet, pdfFilePath, tamanho);
+
+      return res.status(200).json({
+        status: "Success",
+        message: "Cartazes criados com sucesso!",
+        download: `${req.protocol}://${req.get('host')}/pdfs/${pdfFileName}`
+      });
+    } catch (e) {
+      console.error(`Erro ao gerar cartaz ${label}:`, e);
+
+      return res.status(500).json({
+        status: "Error",
+        message: "Não foi possível gerar os cartazes. Tente novamente."
       });
     }
+  };
 
-    const { pdfFileName, pdfFilePath } = buildPdfPath();
-
-    await generatePosterService(sheet, pdfFilePath, tamanho);
-
-    const downloadUrl = `${req.protocol}://${req.get('host')}/pdfs/${pdfFileName}`;
-    return res.status(200).json({
-      status: "Success",
-      message: "Cartazes criados com sucesso!",
-      download: downloadUrl
-    });
-  } catch (e) {
-    console.error("Erro ao gerar cartaz pequeno:", e);
-    return res.status(500).json({
-      status: "Error",
-      message: "Não foi possível gerar os cartazes. Tente novamente."
-    });
-  }
-};
-
-export const generateBigPoster = async (req: Request, res: Response) => {
-  try {
-    const sheet: posterContent[] = req.body.sheet;
-    const tamanho = "cartaz-grande";
-
-    const validation = validateSheet(sheet, expectedHeaders.defaultPoster);
-
-    if (!validation.ok) {
-      return res.status(400).json({
-        status: "Fail",
-        message: validation.message
-      });
-    }
-
-    const { pdfFileName, pdfFilePath } = buildPdfPath();
-
-    await generatePosterService(sheet, pdfFilePath, tamanho);
-
-    const downloadUrl = `${req.protocol}://${req.get('host')}/pdfs/${pdfFileName}`;
-    return res.status(200).json({
-      status: "Success",
-      message: "Cartazes criados com sucesso!",
-      download: downloadUrl
-    });
-  } catch (e) {
-    console.error("Erro ao gerar cartaz grande:", e);
-    return res.status(500).json({
-      status: "Error",
-      message: "Não foi possível gerar os cartazes. Tente novamente."
-    });
-  }
-};
-
-export const generateComboPoster = async (req: Request, res: Response) => {
-  try {
-    const sheet: comboPosterContent[] = req.body.sheet;
-    const tamanho = "cartaz-combo";
-
-    const validation = validateSheet(sheet, expectedHeaders.comboPoster);
-
-    if (!validation.ok) {
-      return res.status(400).json({
-        status: "Fail",
-        message: validation.message
-      });
-    }
-
-    const { pdfFileName, pdfFilePath } = buildPdfPath();
-
-    await generatePosterService(sheet, pdfFilePath, tamanho);
-
-    const downloadUrl = `${req.protocol}://${req.get('host')}/pdfs/${pdfFileName}`;
-    return res.status(200).json({
-      status: "Success",
-      message: "Cartazes criados com sucesso!",
-      download: downloadUrl
-    });
-
-  } catch (e) {
-    console.error("Erro ao gerar cartaz combo:", e);
-    return res.status(500).json({
-      status: "Error",
-      message: "Não foi possível gerar os cartazes. Tente novamente."
-    });
-  }
-};
+export const generateBigPoster = createPosterHandler(POSTER_KINDS.big);
+export const generateSmallPoster = createPosterHandler(POSTER_KINDS.small);
+export const generateComboPoster = createPosterHandler(POSTER_KINDS.combo);

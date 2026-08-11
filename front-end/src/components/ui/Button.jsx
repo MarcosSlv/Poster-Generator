@@ -1,4 +1,6 @@
-function Button({ type = "button", text, disabled, onClick, className = "" }) {
+import PropTypes from "prop-types";
+
+function Button({ type = "button", text, disabled = false, onClick, className = "" }) {
   return (
     <button
       type={type}
@@ -13,5 +15,13 @@ function Button({ type = "button", text, disabled, onClick, className = "" }) {
     </button>
   );
 }
+
+Button.propTypes = {
+  type: PropTypes.oneOf(["button", "submit", "reset"]),
+  text: PropTypes.node,
+  disabled: PropTypes.bool,
+  onClick: PropTypes.func,
+  className: PropTypes.string
+};
 
 export default Button;

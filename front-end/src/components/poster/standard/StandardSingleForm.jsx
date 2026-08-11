@@ -1,58 +1,37 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+
 import { posterService } from "../../../services/posterService";
-import { getRequestErrorMessage } from "../../../services/requestError";
-import { motion, AnimatePresence } from "framer-motion";
-import { MdDownload } from "react-icons/md";
+import usePosterGeneration from "../../../hooks/usePosterGeneration";
 
 import Input from "../../ui/Input";
+import ErrorText from "../../ui/ErrorText";
 import SwitchPosterSize from "../../ui/SwitchPosterSize";
-import Button from "../../ui/Button";
+import DownloadResult from "../DownloadResult";
+import SubmitPosterButton from "../SubmitPosterButton";
 
 function StandardSingleForm() {
   const { register, handleSubmit, formState: { errors }, watch, reset } = useForm();
   const [posterSize, setPosterSize] = useState("cartaz-grande");
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [isSubmiting, setIsSubmiting] = useState(false);
-  const [reqResponse, setReqResponse] = useState("");
-  const [submitError, setSubmitError] = useState("");
+  const { downloadUrl, successMessage, submitError, isSubmiting, generate, clearResult } = usePosterGeneration();
 
   const formValues = watch();
 
   useEffect(() => {
-    setDownloadUrl("");
-    setReqResponse("");
-    setSubmitError("");
-  }, [formValues.produto, formValues.preco, formValues.medida, formValues.limite, posterSize]);
+    clearResult();
+  }, [formValues.produto, formValues.preco, formValues.medida, formValues.limite, posterSize, clearResult]);
 
-  const onSubmit = async (data) => {
-    setDownloadUrl("");
-    setReqResponse("");
-    setSubmitError("");
-    setIsSubmiting(true);
+  const onSubmit = (data) => {
+    const payload = { tamanho: posterSize, sheet: [data] };
 
-    const formatedData = {
-      tamanho: posterSize,
-      sheet: [data],
-    };
+    return generate(() => posterSize === "cartaz-grande"
+      ? posterService.generateBigPoster(payload)
+      : posterService.generateSmallPoster(payload));
+  };
 
-    try {
-      const responseData = (posterSize === "cartaz-grande")
-        ? await posterService.generateBigPoster(formatedData)
-        : await posterService.generateSmallPoster(formatedData);
-
-      if (responseData.status === "Success") {
-        setDownloadUrl(responseData.download);
-        setReqResponse(responseData.message);
-      } else {
-        setSubmitError(responseData.message || "Erro ao criar cartaz. Por favor, tente novamente.");
-      }
-    } catch (error) {
-      console.error("Erro ao criar cartaz:", error);
-      setSubmitError(getRequestErrorMessage(error));
-    } finally {
-      setIsSubmiting(false);
-    }
+  const handleReset = () => {
+    clearResult();
+    reset();
   };
 
   return (
@@ -68,7 +47,7 @@ function StandardSingleForm() {
             validation={{ required: 'A descrição é obrigatória' }}
             className="w-full text-center"
           />
-          {errors.produto && <p className="text-center text-sm font-bold text-destructive">{errors.produto.message}</p>}
+          <ErrorText>{errors.produto?.message}</ErrorText>
         </div>
 
         <div className="flex items-start mt-4">
@@ -86,7 +65,7 @@ function StandardSingleForm() {
               }}
               className="w-28 text-center rounded-md p-2"
             />
-            {errors.preco && <p className="mt-1 text-center text-sm font-bold text-destructive">{errors.preco.message}</p>}
+            <ErrorText className="mt-1">{errors.preco?.message}</ErrorText>
           </div>
 
           <div className="flex flex-col items-center w-1/2">
@@ -99,7 +78,7 @@ function StandardSingleForm() {
               <option value="UN">UN</option>
               <option value="KG">KG</option>
             </select>
-            {errors.medida && <p className="mt-1 text-center text-sm text-destructive">{errors.medida.message}</p>}
+            <ErrorText className="mt-1">{errors.medida?.message}</ErrorText>
           </div>
 
           <div className="flex flex-col items-center w-1/2">
@@ -111,55 +90,18 @@ function StandardSingleForm() {
               register={register}
               className="w-28 rounded-md p-2"
             />
-            {errors.limite && <p className="text-center text-sm text-destructive">{errors.limite.message}</p>}
+            <ErrorText>{errors.limite?.message}</ErrorText>
           </div>
         </div>
 
-        <SwitchPosterSize handleSizeChange={(e) => setPosterSize(e)} errors={errors} />
+        <SwitchPosterSize handleSizeChange={setPosterSize} errors={errors} />
 
-        {submitError && (
-          <p role="alert" className="mb-2 text-center text-sm font-bold text-destructive">{submitError}</p>
-        )}
+        <ErrorText alert className="mb-2">{submitError}</ErrorText>
 
-        {isSubmiting ? (
-          <Button type="submit" text={
-            <div className="mx-8 inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" role="status">
-            </div>
-          } disabled={true} />
-        ) : (
-          <Button type="submit" text="Criar Cartaz" disabled={!!downloadUrl} />
-        )}
+        <SubmitPosterButton isSubmiting={isSubmiting} disabled={!!downloadUrl} />
       </form>
 
-      <AnimatePresence mode="wait">
-        {downloadUrl && (
-          <motion.div
-            key="download-section"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <div>
-              <p className="mt-4 text-center text-chart-3">{reqResponse} Clique no botão abaixo para fazer o download</p>
-              <a href={downloadUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center mt-4">
-                <Button text={<MdDownload className="mr-1 text-xl" />} />
-              </a>
-              <div className="text-center mt-4">
-                <Button
-                  onClick={() => {
-                    setDownloadUrl("");
-                    setReqResponse("");
-                    setSubmitError("");
-                    setIsSubmiting(false);
-                    reset();
-                  }}
-                  text="Criar outro cartaz" />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <DownloadResult downloadUrl={downloadUrl} message={successMessage} onReset={handleReset} />
     </div>
   );
 }

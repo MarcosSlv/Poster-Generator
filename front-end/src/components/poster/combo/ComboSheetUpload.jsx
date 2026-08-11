@@ -1,77 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { posterService } from "../../../services/posterService";
-import { getRequestErrorMessage } from "../../../services/requestError";
 
-import { sheetReaderService } from "../../../services/sheetReader";
+import { posterService } from "../../../services/posterService";
+import useSheetReader from "../../../hooks/useSheetReader";
+import usePosterGeneration from "../../../hooks/usePosterGeneration";
 
 import Input from "../../ui/Input";
-import Button from "../../ui/Button";
+import ErrorText from "../../ui/ErrorText";
+import DownloadResult from "../DownloadResult";
+import SheetHelp from "../SheetHelp";
+import SubmitPosterButton from "../SubmitPosterButton";
 
-import HelpModal from "../../modal/HelpModal";
-
-import { AnimatePresence, motion } from "framer-motion";
-import { MdDownload } from "react-icons/md";
+const IMAGE_PATH = "/assets/images/tabela-modelo-cartaz-combo.png";
+const MODEL_PATH = "/assets/sheets/modelo-cartaz-combo.xlsx";
 
 function ComboSheetUpload() {
   const { register, handleSubmit, formState: { errors }, watch, reset } = useForm();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [isSubmiting, setIsSubmiting] = useState(false);
-  const [reqResponse, setReqResponse] = useState("");
-  const [submitError, setSubmitError] = useState("");
-
-  const imageComboPoster = "/assets/images/tabela-modelo-cartaz-combo.png";
-  const modelComboPosterxls = "/assets/sheets/modelo-cartaz-combo.xlsx";
-
+  const { downloadUrl, successMessage, submitError, isSubmiting, generate, clearResult } = usePosterGeneration();
 
   const fileWatch = watch("file");
-  const { dataArray, loading: dataLoading, error } = sheetReaderService.comboPoster(fileWatch);
+  const { dataArray, loading: dataLoading, error } = useSheetReader(fileWatch, "combo");
 
   useEffect(() => {
-    setDownloadUrl("");
-    setReqResponse("");
-    setSubmitError("");
-  }, [fileWatch]);
+    clearResult();
+  }, [fileWatch, clearResult]);
 
-  const onSubmit = async () => {
-    setDownloadUrl("");
-    setReqResponse("");
-    setSubmitError("");
-    setIsSubmiting(true);
+  const onSubmit = () => generate(() => posterService.generateComboPoster({ sheet: dataArray }));
 
-
-    const formatedData = {
-      sheet: dataArray,
-    };
-
-    try {
-      const responseData = await posterService.generateComboPoster(formatedData);
-
-      if (responseData.status === "Success") {
-        setDownloadUrl(responseData.download);
-        setReqResponse(responseData.message);
-      } else {
-        setSubmitError(responseData.message || "Erro ao criar cartaz. Por favor, tente novamente.");
-      }
-    } catch (error) {
-      console.error("Erro ao criar cartaz:", error);
-      setSubmitError(getRequestErrorMessage(error));
-    } finally {
-      setIsSubmiting(false);
-    }
-  };
-
-  const openHelpModal = () => {
-    setIsModalOpen(true);
+  const handleReset = () => {
+    clearResult();
+    reset();
   };
 
   return (
     <div>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <label className="mb-2 block text-center text-card-foreground">Selecione o Arquivo</label>
+        <label htmlFor="file" className="mb-2 block text-center text-card-foreground">Selecione o Arquivo</label>
         <div className="flex justify-center mb-4">
           <Input
+            id="file"
             type="file"
             name="file"
             placeholder="Selecione o arquivo"
@@ -81,84 +48,20 @@ function ComboSheetUpload() {
             className="w-64"
           />
         </div>
-        {errors.file && <p className="text-center text-sm font-bold text-destructive">{errors.file.message}</p>}
-        {error && <p className="text-center text-sm font-bold text-destructive">{error}</p>}
+        <ErrorText>{errors.file?.message}</ErrorText>
+        <ErrorText>{error}</ErrorText>
 
+        <ErrorText alert className="mb-2">{submitError}</ErrorText>
 
-        {submitError && (
-          <p role="alert" className="mb-2 text-center text-sm font-bold text-destructive">{submitError}</p>
-        )}
-
-        {isSubmiting ? (
-          <Button type="submit" text={
-            <div className="mx-8 inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" role="status">
-            </div>
-          } disabled={true} />
-        ) : (
-          <Button type="submit" text="Criar Cartaz" disabled={!!error || dataLoading || !!downloadUrl} />
-        )}
-
-        <div className="my-2 flex justify-center py-2 text-card-foreground">
-          <label className="form-label-custom fs-2">
-            Dúvidas quanto ao modelo da planilha? <a
-              id="button-click-here"
-              className="btn btn-link p-0 font-extrabold underline transition hover:cursor-pointer hover:text-secondary hover:duration-200"
-              onClick={openHelpModal}
-            >
-              Veja aqui
-            </a>
-          </label>
-        </div>
-
-        <AnimatePresence>
-          {isModalOpen && (
-            <motion.div
-              key="modal"
-              className="fixed inset-0 z-40 flex justify-center items-center backdrop-blur-md"
-              initial={{ opacity: 0, scale: 0, y: -50, boxShadow: "0px 0px 0px rgba(0,0,0,0)" }}
-              animate={{ opacity: 1, scale: 1, y: 0, boxShadow: "0px 30px 60px rgba(0,0,0,1)" }}
-              exit={{ opacity: 0, scale: 0, y: 50, boxShadow: "0px 0px 0px rgba(0,0,0,0)" }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            >
-              <HelpModal
-                fileDownloadPath={modelComboPosterxls}
-                imagePath={imageComboPoster}
-                onClose={() => setIsModalOpen(false)}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <SubmitPosterButton
+          isSubmiting={isSubmiting}
+          disabled={!!error || dataLoading || !!downloadUrl}
+        />
       </form>
 
-      <AnimatePresence mode="wait">
-        {downloadUrl && (
-          <motion.div
-            key="download-section"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <div>
-              <p className="mt-4 text-center text-chart-3">{reqResponse} Clique no botão abaixo para fazer o download</p>
-              <a href={downloadUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center mt-4">
-                <Button text={<MdDownload className="mr-1 text-xl" />} />
-              </a>
-              <div className="text-center mt-4">
-                <Button
-                  onClick={() => {
-                    setDownloadUrl("");
-                    setReqResponse("");
-                    setSubmitError("");
-                    setIsSubmiting(false);
-                    reset();
-                  }}
-                  text="Criar outro cartaz" />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <SheetHelp imagePath={IMAGE_PATH} fileDownloadPath={MODEL_PATH} />
+
+      <DownloadResult downloadUrl={downloadUrl} message={successMessage} onReset={handleReset} />
     </div>
   );
 }
