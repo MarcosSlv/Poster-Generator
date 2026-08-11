@@ -21,6 +21,7 @@ class CorsError extends Error {
     }
 }
 exports.app = (0, express_1.default)();
+exports.app.set("trust proxy", 1);
 exports.app.use((0, cors_1.default)({
     origin(origin, callback) {
         if (!origin || allowedOrigins.length === 0) {
