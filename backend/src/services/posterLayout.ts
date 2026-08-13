@@ -7,7 +7,7 @@ export type TextSpec = {
 };
 
 export const BIG_POSTER = {
-  produto: { x: 35, y: 230, fontSize: 50, alignment: "center" },
+  produto: { x: 50, y: 230, fontSize: 50, alignment: "center" },
   por: { x: 50, y: 500, fontSize: 30, alignment: "left" },
   moeda: { x: 17, y: 720, fontSize: 30, alignment: "left" },
   preco: { x: 10, y: 520, fontSize: 170, alignment: "center" },
