@@ -1,6 +1,7 @@
 function Input({ type, placeholder, name, onChange, accept, step, register, validation, className = "" }) {
   return (
     <input
+      id={name}
       type={type}
       placeholder={placeholder}
       name={name}

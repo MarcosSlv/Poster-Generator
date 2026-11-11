@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import PosterPreviewContext from "../../../context/PosterPreviewContext";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { posterService } from "../../../services/posterService";
 
@@ -13,6 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MdDownload } from "react-icons/md";
 
 function ComboSheetUpload() {
+  const updatePreview = useContext(PosterPreviewContext);
   const { register, handleSubmit, formState: { errors }, watch, reset } = useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState("");
@@ -25,13 +27,14 @@ function ComboSheetUpload() {
 
   const fileWatch = watch("file");
   const { dataArray, loading: dataLoading, error } = sheetReaderService.comboPoster(fileWatch);
-  console.log(dataArray);
 
   useEffect(() => {
-    if (downloadUrl) {
-      setDownloadUrl("");
-      setReqResponse("");
-    }
+    updatePreview({ ...dataArray[0], count: dataArray.length });
+  }, [updatePreview, dataArray]);
+
+  useEffect(() => {
+    setDownloadUrl("");
+    setReqResponse("");
   }, [fileWatch]);
 
   const onSubmit = async () => {
@@ -46,11 +49,13 @@ function ComboSheetUpload() {
 
     try {
       const responseData = await posterService.generateComboPoster(formatedData);
-      console.log(responseData);
 
       if (responseData.status === "Success") {
         setDownloadUrl(responseData.download);
         setReqResponse(responseData.message);
+      }
+      if (responseData.status !== "Success") {
+        setReqResponse(responseData.message || "Não foi possível gerar o cartaz. Tente novamente.");
       }
       setIsSubmiting(false);
     } catch (error) {
@@ -67,8 +72,9 @@ function ComboSheetUpload() {
   return (
     <div>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <label className="mb-2 block text-center text-card-foreground">Selecione o Arquivo</label>
-        <div className="flex justify-center mb-4">
+        {reqResponse && !downloadUrl && <p className="request-feedback" role="alert">{reqResponse}</p>}
+        <label htmlFor="file" className="field-label">Selecione o arquivo</label>
+        <div className="upload-zone">
           <Input
             type="file"
             name="file"
@@ -89,20 +95,12 @@ function ComboSheetUpload() {
             </div>
           } disabled={true} />
         ) : (
-          <Button type="submit" text="Criar Cartaz" disabled={!!error || dataLoading || isSubmiting || reqResponse} />
+          <Button type="submit" text="Gerar cartaz em PDF" disabled={!!error || dataLoading || isSubmiting || !!downloadUrl} />
         )}
 
-        <div className="my-2 flex justify-center py-2 text-card-foreground">
-          <label className="form-label-custom fs-2">
-            Dúvidas quanto ao modelo da planilha? <a
-              id="button-click-here"
-              className="btn btn-link p-0 font-extrabold underline transition hover:cursor-pointer hover:text-secondary hover:duration-200"
-              onClick={openHelpModal}
-            >
-              Veja aqui
-            </a>
-          </label>
-        </div>
+        <p className="sheet-help">
+          Precisa de ajuda com a planilha? <button type="button" onClick={openHelpModal}>Veja o modelo</button>
+        </p>
 
         <AnimatePresence>
           {isModalOpen && (
@@ -135,8 +133,8 @@ function ComboSheetUpload() {
           >
             <div>
               <p className="mt-4 text-center text-chart-3">{reqResponse} Clique no botão abaixo para fazer o download</p>
-              <a href={downloadUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center mt-4">
-                <Button text={<MdDownload className="mr-1 text-xl" />} />
+              <a href={downloadUrl} target="_blank" rel="noreferrer" className="download-link">
+                <MdDownload aria-hidden="true" /> Baixar PDF
               </a>
               <div className="text-center mt-4">
                 <Button

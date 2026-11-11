@@ -11,3 +11,17 @@ Esse projeto foi desenvolvido para agilizar o processo de criação de cartazes 
 
 - **Frontend**: React com Tailwind CSS para uma interface moderna e responsiva.
 - **Backend**: Node.js e Express
+
+## Testar o layout experimental (branch `test`)
+
+```bash
+git switch test
+git pull --ff-only
+cd front-end
+npm install
+npm start
+```
+
+Abra a URL local informada pelo Vite. O estúdio reúne o formulário e uma prévia de conteúdo que acompanha os dados de cartazes individuais, combos e o primeiro produto de uma planilha. A prévia é ilustrativa; confira o PDF gerado antes de imprimir. Os modelos de PDF e a integração com a API permanecem os mesmos.
+
+O layout se adapta ao celular e mantém a preferência por tema claro ou escuro.

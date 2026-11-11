@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import PosterPreviewContext from "../../../context/PosterPreviewContext";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { posterService } from "../../../services/posterService";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +10,7 @@ import SwitchPosterSize from "../../ui/SwitchPosterSize";
 import Button from "../../ui/Button";
 
 function StandardSingleForm() {
+  const updatePreview = useContext(PosterPreviewContext);
   const { register, handleSubmit, formState: { errors }, watch, reset } = useForm();
   const [posterSize, setPosterSize] = useState("cartaz-grande");
   const [downloadUrl, setDownloadUrl] = useState("");
@@ -16,12 +18,15 @@ function StandardSingleForm() {
   const [reqResponse, setReqResponse] = useState("");
 
   const formValues = watch();
+  const { produto, preco, medida, limite } = formValues;
 
   useEffect(() => {
-    if (downloadUrl) {
-      setDownloadUrl("");
-      setReqResponse("");
-    }
+    updatePreview({ produto, preco, medida, limite, size: posterSize });
+  }, [updatePreview, produto, preco, medida, limite, posterSize]);
+
+  useEffect(() => {
+    setDownloadUrl("");
+    setReqResponse("");
   }, [formValues.produto, formValues.preco, formValues.medida, formValues.limite, posterSize]);
 
   const onSubmit = async (data) => {
@@ -43,6 +48,9 @@ function StandardSingleForm() {
         setDownloadUrl(responseData.download);
         setReqResponse(responseData.message);
       }
+      if (responseData.status !== "Success") {
+        setReqResponse(responseData.message || "Não foi possível gerar o cartaz. Tente novamente.");
+      }
       setIsSubmiting(false);
     } catch (error) {
       console.error("Erro ao criar cartaz:", error);
@@ -54,12 +62,13 @@ function StandardSingleForm() {
   return (
     <div className="space-y-4 text-card-foreground">
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col items-center">
-          <label htmlFor="produto" className="block mb-2 text-center">Produto</label>
+        {reqResponse && !downloadUrl && <p className="request-feedback" role="alert">{reqResponse}</p>}
+        <div className="offer-field">
+          <label htmlFor="produto" className="field-label">Produto</label>
           <Input
             type="text"
             name="produto"
-            placeholder="Descrição do Produto"
+            placeholder="Ex.: Café torrado 500 g"
             register={register}
             validation={{ required: 'A descrição é obrigatória' }}
             className="w-full text-center"
@@ -67,9 +76,9 @@ function StandardSingleForm() {
           {errors.produto && <p className="text-center text-sm font-bold text-destructive">{errors.produto.message}</p>}
         </div>
 
-        <div className="flex items-start mt-4">
-          <div className="flex flex-col items-center w-1/2">
-            <label htmlFor="preco" className="block mb-1 text-center">Preço</label>
+        <div className="offer-fields-grid">
+          <div className="offer-field">
+            <label htmlFor="preco" className="field-label">Preço</label>
             <Input
               type="number"
               name="preco"
@@ -85,8 +94,8 @@ function StandardSingleForm() {
             {errors.preco && <p className="mt-1 text-center text-sm font-bold text-destructive">{errors.preco.message}</p>}
           </div>
 
-          <div className="flex flex-col items-center w-1/2">
-            <label htmlFor="medida" className="block mb-1 text-center">Medida</label>
+          <div className="offer-field">
+            <label htmlFor="medida" className="field-label">Medida</label>
             <select
               id="medida"
               {...register("medida", { required: 'A medida é obrigatória' })}
@@ -98,12 +107,12 @@ function StandardSingleForm() {
             {errors.medida && <p className="mt-1 text-center text-sm text-destructive">{errors.medida.message}</p>}
           </div>
 
-          <div className="flex flex-col items-center w-1/2">
-            <label htmlFor="limite" className="block mb-1 text-center">Limite</label>
+          <div className="offer-field">
+            <label htmlFor="limite" className="field-label">Limite</label>
             <Input
               type="text"
               name="limite"
-              placeholder="02 UN."
+              placeholder="Opcional"
               register={register}
               className="w-28 rounded-md p-2"
             />
@@ -119,7 +128,7 @@ function StandardSingleForm() {
             </div>
           } disabled={true} />
         ) : (
-          <Button type="submit" text="Criar Cartaz" disabled={isSubmiting || reqResponse} />
+          <Button type="submit" text="Gerar cartaz em PDF" disabled={isSubmiting || !!downloadUrl} />
         )}
       </form>
 
@@ -134,8 +143,8 @@ function StandardSingleForm() {
           >
             <div>
               <p className="mt-4 text-center text-chart-3">{reqResponse} Clique no botão abaixo para fazer o download</p>
-              <a href={downloadUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center mt-4">
-                <Button text={<MdDownload className="mr-1 text-xl" />} />
+              <a href={downloadUrl} target="_blank" rel="noreferrer" className="download-link">
+                <MdDownload aria-hidden="true" /> Baixar PDF
               </a>
               <div className="text-center mt-4">
                 <Button

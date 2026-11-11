@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MdDarkMode, MdLightMode } from "react-icons/md";
+import { LuScanLine, LuArrowUpRight } from "react-icons/lu";
 import { Outlet } from "react-router-dom";
 
 const getInitialTheme = () => {
@@ -30,17 +31,26 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 pt-16 text-foreground sm:pt-24">
-      <button
-        type="button"
-        aria-label={isDark ? "Alterar para tema claro" : "Alterar para tema escuro"}
-        aria-pressed={isDark}
-        title={isDark ? "Tema claro" : "Tema escuro"}
-        onClick={toggleTheme}
-        className="fixed right-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card text-card-foreground shadow-md transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-      >
-        {isDark ? <MdLightMode className="text-xl" /> : <MdDarkMode className="text-xl" />}
-      </button>
+    <div className="app-shell">
+      <header className="studio-header">
+        <a className="studio-brand" href="/" aria-label="Poster Generator — início">
+          <span className="brand-mark"><LuScanLine aria-hidden="true" /></span>
+          <span>poster<span className="brand-light">studio</span><small>GERADOR DE CARTAZES</small></span>
+        </a>
+        <div className="header-actions">
+          <a className="header-create" href="#editor">Área de criação <LuArrowUpRight aria-hidden="true" /></a>
+          <button
+            type="button"
+            aria-label={isDark ? "Alterar para tema claro" : "Alterar para tema escuro"}
+            aria-pressed={isDark}
+            title={isDark ? "Tema claro" : "Tema escuro"}
+            onClick={toggleTheme}
+            className="theme-toggle"
+          >
+            {isDark ? <MdLightMode className="text-xl" /> : <MdDarkMode className="text-xl" />}
+          </button>
+        </div>
+      </header>
       <Outlet />
     </div>
   );

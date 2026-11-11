@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import PosterPreviewContext from "../../../context/PosterPreviewContext";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { posterService } from "../../../services/posterService";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,19 +10,23 @@ import Button from "../../ui/Button";
 
 
 function ComboSingleForm() {
+  const updatePreview = useContext(PosterPreviewContext);
   const { register, handleSubmit, formState: { errors }, watch, reset } = useForm();
   const [downloadUrl, setDownloadUrl] = useState("");
   const [isSubmiting, setIsSubmiting] = useState(false);
   const [reqResponse, setReqResponse] = useState("");
 
   const formValues = watch();
+  const { produto, comboQtd, comboVlr, medida } = formValues;
 
   useEffect(() => {
-    if (downloadUrl) {
-      setDownloadUrl("");
-      setReqResponse("");
-    }
-  }, [formValues.produto, formValues.preco, formValues.medida, formValues.limite]);
+    updatePreview({ produto, comboQtd, comboVlr, medida });
+  }, [updatePreview, produto, comboQtd, comboVlr, medida]);
+
+  useEffect(() => {
+    setDownloadUrl("");
+    setReqResponse("");
+  }, [formValues.produto, formValues.comboQtd, formValues.comboVlr, formValues.medida]);
 
   const onSubmit = async (data) => {
     setDownloadUrl("");
@@ -43,6 +48,9 @@ function ComboSingleForm() {
         setDownloadUrl(responseData.download);
         setReqResponse(responseData.message);
       }
+      if (responseData.status !== "Success") {
+        setReqResponse(responseData.message || "Não foi possível gerar o cartaz. Tente novamente.");
+      }
       setIsSubmiting(false);
     } catch (error) {
       console.error("Erro ao criar cartaz:", error);
@@ -54,12 +62,13 @@ function ComboSingleForm() {
   return (
     <div className="space-y-4 text-card-foreground">
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col items-center">
-          <label htmlFor="produto" className="block mb-2 text-center">Produto</label>
+        {reqResponse && !downloadUrl && <p className="request-feedback" role="alert">{reqResponse}</p>}
+        <div className="offer-field">
+          <label htmlFor="produto" className="field-label">Produto</label>
           <Input
             type="text"
             name="produto"
-            placeholder="Descrição do Produto"
+            placeholder="Ex.: Café torrado 500 g"
             register={register}
             validation={{ required: 'A descrição é obrigatória' }}
             className="w-full text-center"
@@ -67,9 +76,9 @@ function ComboSingleForm() {
           {errors.produto && <p className="text-center text-sm font-bold text-destructive">{errors.produto.message}</p>}
         </div>
 
-        <div className="flex items-start mt-4">
-          <div className="flex flex-col items-center w-1/2">
-            <label htmlFor="comboQtd" className="block mb-1 text-center">Quantidade</label>
+        <div className="offer-fields-grid">
+          <div className="offer-field">
+            <label htmlFor="comboQtd" className="field-label">Quantidade</label>
             <Input
               type="text"
               name="comboQtd"
@@ -77,15 +86,15 @@ function ComboSingleForm() {
               register={register}
               validation={{
                 required: 'A quantidade é obrigatória',
-                min: { value: 1, message: 'A quantidade deve ser maior que 0' }
+                pattern: { value: /^[1-9]\d*$/, message: 'Informe uma quantidade inteira maior que 0' }
               }}
               className="w-28 text-center rounded-md p-2"
             />
-            {errors.preco && <p className="mt-1 text-center text-sm font-bold text-destructive">{errors.preco.message}</p>}
+            {errors.comboQtd && <p className="mt-1 text-center text-sm font-bold text-destructive">{errors.comboQtd.message}</p>}
           </div>
 
-          <div className="flex flex-col items-center w-1/2">
-            <label htmlFor="medida" className="block mb-1 text-center">Medida</label>
+          <div className="offer-field">
+            <label htmlFor="medida" className="field-label">Medida</label>
             <select
               id="medida"
               {...register("medida", { required: 'A medida é obrigatória' })}
@@ -97,8 +106,8 @@ function ComboSingleForm() {
             {errors.medida && <p className="mt-1 text-center text-sm text-destructive">{errors.medida.message}</p>}
           </div>
 
-          <div className="flex flex-col items-center w-1/2">
-            <label htmlFor="comboVlr" className="block mb-1 text-center">Valor</label>
+          <div className="offer-field">
+            <label htmlFor="comboVlr" className="field-label">Valor</label>
             <Input
               type="text"
               name="comboVlr"
@@ -124,7 +133,7 @@ function ComboSingleForm() {
               </div>
             } disabled={true} />
           ) : (
-            <Button type="submit" text="Criar Cartaz" disabled={isSubmiting || reqResponse} />
+            <Button type="submit" text="Gerar cartaz em PDF" disabled={isSubmiting || !!downloadUrl} />
           )}
         </div>
       </form>
@@ -140,8 +149,8 @@ function ComboSingleForm() {
           >
             <div>
               <p className="mt-4 text-center text-chart-3">{reqResponse} Clique no botão abaixo para fazer o download</p>
-              <a href={downloadUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center mt-4">
-                <Button text={<MdDownload className="mr-1 text-xl" />} />
+              <a href={downloadUrl} target="_blank" rel="noreferrer" className="download-link">
+                <MdDownload aria-hidden="true" /> Baixar PDF
               </a>
               <div className="text-center mt-4">
                 <Button
